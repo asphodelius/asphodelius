@@ -16,7 +16,7 @@
 
 <br>
 
- <h1>Languages and Tools</h1>
+ <h1>🔮Languages and Tools</h1>
 <p align="left">
 <!-- vs code -->
  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/visual-studio-code/visual-studio-code.png" height="30" alt="html5 logo"  />
@@ -34,3 +34,7 @@
 <br>
 
 </p> 
+<h1>🎧Spotify</h1>
+<p align="left">
+     <img src="https://spotify-now-playing-plum-six.vercel.app/api/spotify?background_color=0d1117&border_color=ffffff" href="https://open.spotify.com/user/42ytx2cgm9ohv0tnswmw9h4eg">
+</p>
