@@ -16,25 +16,27 @@
 
 <br>
 
- <h1>🔮Languages and Tools</h1>
+ ## ⚡ Technologies
 <p align="left">
 <!-- vs code -->
- <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/visual-studio-code/visual-studio-code.png" height="30" alt="html5 logo"  />
-  <img width="12" />
- <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" height="30" alt="html5 logo"  />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" height="30" alt="css3 logo"  />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-plain.svg" height="30" alt="javascript logo"  />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" height="30" alt="cplusplus logo"  />
+ <img src="https://img.shields.io/badge/VSCode-0078D4?style=for-the-badge&logo=visual%20studio%20code&logoColor=white" height="25" alt="html5 logo"  />
+      <img width="1" />
+ <img src="https://camo.githubusercontent.com/d63d473e728e20a286d22bb2226a7bf45a2b9ac6c72c59c0e61e9730bfe4168c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f48544d4c352d4533344632363f7374796c653d666f722d7468652d6261646765266c6f676f3d68746d6c35266c6f676f436f6c6f723d7768697465" height="25" alt="html5 logo"  />
+  <img width="1" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" height="25" alt="css3 logo"  />
+  <img width="1" />
+  <img src="https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E" height="25" alt="javascript logo"  />
+  <img width="1" />
+  <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" height="25" alt="cplusplus logo"  />
   <img align="right" src="https://visitcount.itsvg.in/api?id=asphodelius&icon=0&color=12">
  </a> 
 
 <br>
 
 </p> 
-<h1>🎧Spotify</h1>
+
+## 🎧 Spotify
+
 <p align="left">
      <img src="https://spotify-now-playing-plum-six.vercel.app/api/spotify?background_color=0d1117&border_color=ffffff" href="https://open.spotify.com/user/42ytx2cgm9ohv0tnswmw9h4eg">
 </p>
