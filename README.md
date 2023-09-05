@@ -16,7 +16,7 @@
 
 <br>
 
- ## ⚡ Technologies
+ ## <img src="https://i.pinimg.com/originals/9c/e9/c2/9ce9c25f059ea8002b7b0bff1dc552c1.gif" height="50" > Technologies
 <p align="left">
 <!-- vs code -->
  <img src="https://img.shields.io/badge/VSCode-0078D4?style=for-the-badge&logo=visual%20studio%20code&logoColor=white" height="25" alt="html5 logo"  />
@@ -35,7 +35,7 @@
 
 </p> 
 
-## 🎧 Spotify
+## <img src="https://i.imgur.com/y2y8P83.gif" height="30" > Spotify
 
 <p align="left">
      <img src="https://spotify-now-playing-plum-six.vercel.app/api/spotify?background_color=0d1117&border_color=ffffff" href="https://open.spotify.com/user/42ytx2cgm9ohv0tnswmw9h4eg">
