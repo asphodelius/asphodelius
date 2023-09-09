@@ -1,4 +1,4 @@
-<img align="left" src="https://i.pinimg.com/originals/cc/2d/2a/cc2d2a4b08b801879707231afbffdecf.gif" width="30%" style="display:inline;"><img align="right" src="https://im2.ezgif.com/tmp/ezgif-2-894a6f4d83.gif" width="30%" style="display:inline;">
+<img align="left" src="https://i.pinimg.com/originals/cc/2d/2a/cc2d2a4b08b801879707231afbffdecf.gif" width="30%" style="display:inline;"><img align="right" src="https://i.imgur.com/jmq1TIy.gif" width="30%" style="display:inline;">
 <br>
 
 
