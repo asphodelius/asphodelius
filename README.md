@@ -14,27 +14,26 @@
 
 
 
+
+
 <br>
 
- ## <img src="https://i.pinimg.com/originals/9c/e9/c2/9ce9c25f059ea8002b7b0bff1dc552c1.gif" height="50" > Technologies
+## <img src="https://i.pinimg.com/originals/9c/e9/c2/9ce9c25f059ea8002b7b0bff1dc552c1.gif" height="50" > Technologies
 <p align="left">
-<!-- vs code -->
- <img src="https://img.shields.io/badge/VSCode-0078D4?style=for-the-badge&logo=visual%20studio%20code&logoColor=white" height="25" alt="html5 logo"  />
-      <img width="1" />
- <img src="https://camo.githubusercontent.com/d63d473e728e20a286d22bb2226a7bf45a2b9ac6c72c59c0e61e9730bfe4168c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f48544d4c352d4533344632363f7374796c653d666f722d7468652d6261646765266c6f676f3d68746d6c35266c6f676f436f6c6f723d7768697465" height="25" alt="html5 logo"  />
-
-  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" height="25" alt="css3 logo"  />
-   <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" height="25"   />
-  
-
-  <img src="https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E" height="25" alt="javascript logo"  />
- 
+  <!-- vs code -->
+  <img src="https://img.shields.io/badge/VSCode-0078D4?style=for-the-badge&logo=visual%20studio%20code&logoColor=white" height="25" alt="html5 logo" />
+  <img width="1" />
+  <img src="https://camo.githubusercontent.com/d63d473e728e20a286d22bb2226a7bf45a2b9ac6c72c59c0e61e9730bfe4168c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f48544d4c352d4533344632363f7374796c653d666f722d7468652d6261646765266c6f676f3d68746d6c35266c6f676f436f6c6f723d7768697465" height="25" alt="html5 logo" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" height="25" alt="css3 logo" />
+  <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" height="25" />
+    <br>
+  <img src="https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E" height="25" alt="javascript logo" />
+    <br>
   <img alt="Static Badge" src="https://img.shields.io/badge/REACT-%2320232A?style=for-the-badge&logo=react" height="25">
   <img alt="Static Badge" src="https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white" height="25">
   <img alt="Static Badge" src="https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white" height="25">
-  
- 
-  
+</p>
+
   <img align="right" src="https://visitcount.itsvg.in/api?id=asphodelius&icon=0&color=12">
  </a> 
 
