@@ -1,0 +1,87 @@
+{
+  "Portfolio": {
+    "siteName": "Digital Asphodelus",
+    "alias": "asphodelius",
+    "hero": {
+      "eyebrow": "Digital Asphodelus",
+      "titleLine1": "Интерфейсы,",
+      "titleLine2": "которые",
+      "bloomWord": "расцветают",
+      "titleLine3": "из кода.",
+      "body": "",
+      "scrollCue": "Избранные проекты",
+      "code": [
+        "const seed = compose(\"logic\", \"atmosphere\");",
+        "const stem = grow(seed, interaction);",
+        "render(<Bloom />);"
+      ]
+    },
+    "intro": {
+      "label": "Введение",
+      "statement": "Я создаю цифровые продукты, в которых инженерная точность становится визуальной атмосферой.",
+      "supporting": "Этот проект построен как простая и цельная система: без лишнего, с акцентом на структуру, ритм и сами работы. Визуальный образ поддерживает содержание, а не отвлекает от него.",
+      "stackLabel": "Навыки",
+      "stackHeading": "Frontend-системы, инструменты взаимодействия и технологии, которыми я пользуюсь в реальной продуктовой работе.",
+      "stackHint": "Наведи на технологию, чтобы оживить лист на цветке."
+    },
+    "work": {
+      "label": "Избранные проекты",
+      "projects": [
+        {
+          "title": "Northstar Index",
+          "category": "Редакционная аналитическая платформа",
+          "summary": "Спокойный data-продукт, где плотная отчетность превращена в ясную и читаемую поверхность для решений.",
+          "meta": "Product design / Frontend direction / 2026"
+        },
+        {
+          "title": "Atelier Archive",
+          "category": "Система luxury-commerce",
+          "summary": "E-commerce опыт, выстроенный как издание: между конверсией, сдержанностью и атмосферой.",
+          "meta": "Creative direction / Interaction system / 2025"
+        },
+        {
+          "title": "Field System",
+          "category": "Операционный интерфейс для design-команд",
+          "summary": "Модульное рабочее пространство для быстрых релизов без потери нарратива, типографики и тактильного ритма.",
+          "meta": "Design systems / Product UX / 2024"
+        }
+      ]
+    },
+    "philosophy": {
+      "label": "Философия",
+      "quote": "Каждый интерфейс должен ощущаться авторским, а не собранным из частей.",
+      "highlightWord": "авторским",
+      "metallicWord": "частей",
+      "supporting": "Минимализм - это точность в деталях. Иерархия, ритм и типографика создают спокойный интерфейс.",
+      "butterflyLabel": "Вспугнуть бабочку"
+    },
+    "contact": {
+      "label": "Контакты",
+      "heading": "Открыт к проектам в product design, creative direction и frontend-разработке.",
+      "links": [
+        {
+          "label": "Email",
+          "value": "hello@asphodelius.dev",
+          "href": "mailto:hello@asphodelius.dev"
+        },
+        {
+          "label": "GitHub",
+          "value": "github.com/asphodelius",
+          "href": "https://github.com/asphodelius"
+        },
+        {
+          "label": "Telegram",
+          "value": "t.me/stereoling",
+          "href": "https://t.me/stereoling#"
+        }
+      ]
+    },
+    "cursor": {
+      "open": "открыть",
+      "contact": "связаться",
+      "explore": "изучить",
+      "view": "смотреть",
+      "butterfly": "оживить"
+    }
+  }
+}

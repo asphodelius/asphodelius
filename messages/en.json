@@ -1,0 +1,87 @@
+{
+  "Portfolio": {
+    "siteName": "Digital Asphodelus",
+    "alias": "asphodelius",
+    "hero": {
+      "eyebrow": "Digital Asphodelus",
+      "titleLine1": "Interfaces",
+      "titleLine2": "that",
+      "bloomWord": "bloom",
+      "titleLine3": "from code.",
+      "body": "",
+      "scrollCue": "Selected work",
+      "code": [
+        "const seed = compose(\"logic\", \"atmosphere\");",
+        "const stem = grow(seed, interaction);",
+        "render(<Bloom />);"
+      ]
+    },
+    "intro": {
+      "label": "Intro",
+      "statement": "I build digital products where engineering precision becomes visual atmosphere.",
+      "supporting": "This project is built as a simple, cohesive system with the focus kept on structure, rhythm, and the work itself. The visual motif supports the content instead of competing with it.",
+      "stackLabel": "Stack",
+      "stackHeading": "Frontend systems, interaction tooling, and product delivery technologies I use in practice.",
+      "stackHint": "Hover any technology to wake a leaf on the flower."
+    },
+    "work": {
+      "label": "Selected Work",
+      "projects": [
+        {
+          "title": "Northstar Index",
+          "category": "Editorial analytics platform",
+          "summary": "A quiet data product where dense reporting is shaped into a calm, readable decision surface.",
+          "meta": "Product design / Frontend direction / 2026"
+        },
+        {
+          "title": "Atelier Archive",
+          "category": "Luxury commerce system",
+          "summary": "An e-commerce experience built like a publication, balancing conversion with restraint and atmosphere.",
+          "meta": "Creative direction / Interaction system / 2025"
+        },
+        {
+          "title": "Field System",
+          "category": "Operational interface for design teams",
+          "summary": "A modular workspace for shipping fast without losing narrative clarity, typography, or tactile rhythm.",
+          "meta": "Design systems / Product UX / 2024"
+        }
+      ]
+    },
+    "philosophy": {
+      "label": "Philosophy",
+      "quote": "Every interface should feel authored, not assembled.",
+      "highlightWord": "authored",
+      "metallicWord": "assembled",
+      "supporting": "Minimalism is precision in the details. Hierarchy, rhythm, and typography create a calm interface.",
+      "butterflyLabel": "Send the butterfly into flight"
+    },
+    "contact": {
+      "label": "Contact",
+      "heading": "Available for projects in product design, creative direction, and frontend development.",
+      "links": [
+        {
+          "label": "Email",
+          "value": "hello@asphodelius.dev",
+          "href": "mailto:hello@asphodelius.dev"
+        },
+        {
+          "label": "GitHub",
+          "value": "github.com/asphodelius",
+          "href": "https://github.com/asphodelius"
+        },
+        {
+          "label": "Telegram",
+          "value": "t.me/stereoling",
+          "href": "https://t.me/stereoling#"
+        }
+      ]
+    },
+    "cursor": {
+      "open": "open",
+      "contact": "contact",
+      "explore": "explore",
+      "view": "view",
+      "butterfly": "awaken"
+    }
+  }
+}
