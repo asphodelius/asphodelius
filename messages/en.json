@@ -28,6 +28,13 @@
       "label": "Selected Work",
       "projects": [
         {
+          "title": "Good People",
+          "category": "Real estate agency website in Novosibirsk",
+          "summary": "A trust-led real estate website built around legal safety, personal guidance, and conversion-focused storytelling.",
+          "meta": "Strategy / UI design / Frontend build / 2026",
+          "href": "https://good-people.pro"
+        },
+        {
           "title": "Northstar Index",
           "category": "Editorial analytics platform",
           "summary": "A quiet data product where dense reporting is shaped into a calm, readable decision surface.",
@@ -38,12 +45,6 @@
           "category": "Luxury commerce system",
           "summary": "An e-commerce experience built like a publication, balancing conversion with restraint and atmosphere.",
           "meta": "Creative direction / Interaction system / 2025"
-        },
-        {
-          "title": "Field System",
-          "category": "Operational interface for design teams",
-          "summary": "A modular workspace for shipping fast without losing narrative clarity, typography, or tactile rhythm.",
-          "meta": "Design systems / Product UX / 2024"
         }
       ]
     },
