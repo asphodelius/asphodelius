@@ -51,6 +51,7 @@ type WordmarkPlacement<AssetId extends string> = {
 };
 
 type BloomProps = {
+  activationDelayMs?: number;
   className?: string;
   locale: AppLocale;
   word?: string;
@@ -416,25 +417,40 @@ function renderRussianWordmark() {
   );
 }
 
-export function Bloom({ className, locale, word }: BloomProps) {
+export function Bloom({
+  activationDelayMs = 0,
+  className,
+  locale,
+  word,
+}: BloomProps) {
   const [isActive, setIsActive] = useState(false);
   const isEnglishCustom = locale === "en";
 
   useEffect(() => {
     let frameA = 0;
     let frameB = 0;
+    let timeoutId = 0;
 
-    frameA = window.requestAnimationFrame(() => {
-      frameB = window.requestAnimationFrame(() => {
-        setIsActive(true);
+    const startAnimation = () => {
+      frameA = window.requestAnimationFrame(() => {
+        frameB = window.requestAnimationFrame(() => {
+          setIsActive(true);
+        });
       });
-    });
+    };
+
+    if (activationDelayMs > 0) {
+      timeoutId = window.setTimeout(startAnimation, activationDelayMs);
+    } else {
+      startAnimation();
+    }
 
     return () => {
+      window.clearTimeout(timeoutId);
       window.cancelAnimationFrame(frameA);
       window.cancelAnimationFrame(frameB);
     };
-  }, []);
+  }, [activationDelayMs]);
 
   return (
     <span

@@ -24,13 +24,13 @@ import {
   useTransform,
 } from "framer-motion";
 import Lenis from "lenis";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import {
   type ComponentType,
   type MouseEvent,
   type SVGProps,
   forwardRef,
-  memo,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -38,7 +38,6 @@ import {
   useState,
 } from "react";
 import GradientText from "@/components/GradientText";
-import LightRays from "@/components/LightRays";
 import { Highlighter } from "@/components/ui/highlighter";
 import { cn } from "@/lib/utils";
 import { Bloom } from "./Bloom";
@@ -49,7 +48,9 @@ import { StoryFlower } from "./StoryFlower";
 const revealEase = [0.22, 1, 0.36, 1] as const;
 const technologyAccent = "rgba(232, 227, 217, 0.62)";
 const flowerCompletionLockProgress = 0.96;
-const MemoLightRays = memo(LightRays);
+const LazyLightRays = dynamic(() => import("@/components/LightRays"), {
+  ssr: false,
+});
 
 type CursorMode = "default" | "focus" | "link";
 type CursorOverlayHandle = {
@@ -260,7 +261,8 @@ const ui = {
     "text-[clamp(1rem,1vw,1.1rem)] lowercase tracking-[0.18em] [&_.text-content]:text-inherit [&_.text-content]:font-medium [&_.text-content]:leading-none [&_.text-content]:tracking-[inherit] [&_.text-content]:[font-family:var(--font-mono),IBM_Plex_Mono,monospace]",
   microLabel:
     "mb-6 inline-flex items-center gap-3 text-[0.72rem] uppercase tracking-[0.22em] text-[#a1a1aa] before:block before:h-px before:w-10 before:bg-[rgba(232,227,217,0.35)] before:content-[''] [font-family:var(--font-mono),IBM_Plex_Mono,monospace]",
-  heroCopy: "max-w-[36rem] min-w-0 max-[980px]:max-w-[40rem]",
+  heroCopy:
+    "max-w-[36rem] min-w-0 transform-gpu [will-change:transform,opacity] max-[980px]:max-w-[40rem]",
   displayTitle:
     "m-0 max-w-[10ch] text-[clamp(4.1rem,10vw,8.7rem)] font-semibold leading-[0.9] tracking-[-0.06em] [&>[data-hero-line]]:block max-[980px]:max-w-[9ch] max-[640px]:max-w-[8ch] max-[640px]:text-[clamp(3.1rem,16vw,4.7rem)]",
   bloomLine: "inline-flex flex-wrap items-end gap-x-[0.16em] gap-y-[0.04em]",
@@ -547,6 +549,8 @@ export default function DigitalAsphodelusPortfolio() {
   const [hasReachedWorkListEnd, setHasReachedWorkListEnd] = useState(false);
   const [isFlowerProgressLocked, setIsFlowerProgressLocked] = useState(false);
   const [finePointer, setFinePointer] = useState(false);
+  const [isHeroVisualReady, setIsHeroVisualReady] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const cursorRef = useRef<CursorOverlayHandle | null>(null);
   const introUnderlineParts = useMemo(
     () => splitTextFragment(introStatement, introStatementAccent.underline),
@@ -652,6 +656,62 @@ export default function DigitalAsphodelusPortfolio() {
       return;
     }
 
+    const media = window.matchMedia("(min-width: 981px)");
+    const updateViewport = () => setIsDesktopViewport(media.matches);
+    updateViewport();
+    media.addEventListener("change", updateViewport);
+
+    return () => {
+      media.removeEventListener("change", updateViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    let frameOne = 0;
+    let frameTwo = 0;
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+    let idleId: number | null = null;
+
+    const activateVisuals = () => {
+      setIsHeroVisualReady(true);
+    };
+
+    frameOne = window.requestAnimationFrame(() => {
+      frameTwo = window.requestAnimationFrame(() => {
+        const requestIdle = window.requestIdleCallback?.bind(window);
+
+        if (requestIdle) {
+          idleId = requestIdle(activateVisuals, { timeout: 700 });
+          return;
+        }
+
+        timeoutId = globalThis.setTimeout(activateVisuals, 420);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameOne);
+      window.cancelAnimationFrame(frameTwo);
+
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHeroVisualReady || typeof window === "undefined") {
+      return;
+    }
+
     const lenis = new Lenis({
       duration: 1.15,
       smoothWheel: true,
@@ -675,7 +735,7 @@ export default function DigitalAsphodelusPortfolio() {
       lenis.destroy();
       lenisRef.current = null;
     };
-  }, []);
+  }, [isHeroVisualReady]);
 
   const showCursor = finePointer;
   const projects = t.raw("work.projects") as Project[];
@@ -739,19 +799,21 @@ export default function DigitalAsphodelusPortfolio() {
       <div className={ui.noise} />
       <div className={ui.mobileVisualBackdrop} aria-hidden="true">
         <div className={ui.mobileVisualGlow} />
-        <div className={ui.mobileStoryFlowerFrame}>
-          <StoryFlower
-            className={ui.mobileStoryFlower}
-            progress={railFlowerProgress}
-            hoveredProject={hoveredProject}
-            hoveredSkillLeaf={hoveredSkillLeaf}
-            highlightedSkillLeaves={highlightedProjectSkillLeaves}
-            activeProjectLabel={activeProjectLabel}
-            activeSkillLabel={hoveredSkillLabel}
-            activeSkillAccent={hoveredSkillAccent}
-            idPrefix="mobile-flower"
-          />
-        </div>
+        {isHeroVisualReady ? (
+          <div className={ui.mobileStoryFlowerFrame}>
+            <StoryFlower
+              className={ui.mobileStoryFlower}
+              progress={railFlowerProgress}
+              hoveredProject={hoveredProject}
+              hoveredSkillLeaf={hoveredSkillLeaf}
+              highlightedSkillLeaves={highlightedProjectSkillLeaves}
+              activeProjectLabel={activeProjectLabel}
+              activeSkillLabel={hoveredSkillLabel}
+              activeSkillAccent={hoveredSkillAccent}
+              idPrefix="mobile-flower"
+            />
+          </div>
+        ) : null}
       </div>
       {showCursor ? <CursorOverlay ref={cursorRef} /> : null}
 
@@ -771,9 +833,9 @@ export default function DigitalAsphodelusPortfolio() {
 
             <motion.div
               className={ui.heroCopy}
-              initial={{ opacity: 0.94, y: 18 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.1, ease: revealEase }}
+              transition={{ duration: 0.82, ease: revealEase }}
             >
               <span className={ui.microLabel}>{t("hero.eyebrow")}</span>
               <h1 className={ui.displayTitle}>
@@ -782,7 +844,11 @@ export default function DigitalAsphodelusPortfolio() {
                     <span data-hero-line>{t("hero.titleLine1")}</span>
                     <span data-hero-line>{t("hero.titleLine2")}</span>
                     <span data-hero-line className={ui.bloomLine}>
-                      <Bloom locale="ru" word={t("hero.bloomWord")} />
+                      <Bloom
+                        activationDelayMs={520}
+                        locale="ru"
+                        word={t("hero.bloomWord")}
+                      />
                       <span>{t("hero.titleLine3")}</span>
                     </span>
                   </>
@@ -792,7 +858,11 @@ export default function DigitalAsphodelusPortfolio() {
                       {t("hero.titleLine1")} {t("hero.titleLine2")}
                     </span>
                     <span data-hero-line className={ui.bloomLine}>
-                      <Bloom locale="en" word={t("hero.bloomWord")} />
+                      <Bloom
+                        activationDelayMs={520}
+                        locale="en"
+                        word={t("hero.bloomWord")}
+                      />
                       <span>{t("hero.titleLine3")}</span>
                     </span>
                   </>
@@ -1080,32 +1150,38 @@ export default function DigitalAsphodelusPortfolio() {
         <aside className={ui.visualRail}>
           <div className={ui.visualSticky}>
             <div className={ui.railVisualFrame}>
-              <div className={ui.railLightRays} style={railLightRaysStyle}>
-                <MemoLightRays
-                  raysOrigin="top-right"
-                  raysColor="#f5efe2"
-                  raysSpeed={0.4}
-                  lightSpread={0.94}
-                  rayLength={5}
-                  fadeDistance={2}
-                  saturation={0.72}
-                  followMouse
-                  mouseInfluence={0.07}
-                  noiseAmount={0.04}
-                  distortion={0.06}
-                />
-              </div>
-              <StoryFlower
-                className={ui.flowerSvg}
-                progress={railFlowerProgress}
-                hoveredProject={hoveredProject}
-                hoveredSkillLeaf={hoveredSkillLeaf}
-                highlightedSkillLeaves={highlightedProjectSkillLeaves}
-                activeProjectLabel={activeProjectLabel}
-                activeSkillLabel={hoveredSkillLabel}
-                activeSkillAccent={hoveredSkillAccent}
-                idPrefix="rail-flower"
-              />
+              {isHeroVisualReady ? (
+                <>
+                  {isDesktopViewport ? (
+                    <div className={ui.railLightRays} style={railLightRaysStyle}>
+                      <LazyLightRays
+                        raysOrigin="top-right"
+                        raysColor="#f5efe2"
+                        raysSpeed={0.4}
+                        lightSpread={0.94}
+                        rayLength={5}
+                        fadeDistance={2}
+                        saturation={0.72}
+                        followMouse
+                        mouseInfluence={0.07}
+                        noiseAmount={0.04}
+                        distortion={0.06}
+                      />
+                    </div>
+                  ) : null}
+                  <StoryFlower
+                    className={ui.flowerSvg}
+                    progress={railFlowerProgress}
+                    hoveredProject={hoveredProject}
+                    hoveredSkillLeaf={hoveredSkillLeaf}
+                    highlightedSkillLeaves={highlightedProjectSkillLeaves}
+                    activeProjectLabel={activeProjectLabel}
+                    activeSkillLabel={hoveredSkillLabel}
+                    activeSkillAccent={hoveredSkillAccent}
+                    idPrefix="rail-flower"
+                  />
+                </>
+              ) : null}
               {renderCodePrelude()}
             </div>
           </div>
