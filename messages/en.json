@@ -83,6 +83,10 @@
       "explore": "explore",
       "view": "view",
       "butterfly": "awaken"
+    },
+    "easterEgg": {
+      "progress": "Click {remaining} more {remaining, plural, one {time} other {times}} to wake the butterfly garden.",
+      "unlocked": "The butterfly garden is awake."
     }
   }
 }

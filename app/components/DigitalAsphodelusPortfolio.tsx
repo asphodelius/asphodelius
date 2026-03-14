@@ -42,6 +42,7 @@ import LightRays from "@/components/LightRays";
 import { Highlighter } from "@/components/ui/highlighter";
 import { cn } from "@/lib/utils";
 import { Bloom } from "./Bloom";
+import PortfolioEasterEgg from "./PortfolioEasterEgg";
 import PhilosophyPollination from "./PhilosophyPollination";
 import { StoryFlower } from "./StoryFlower";
 
@@ -729,7 +730,7 @@ export default function DigitalAsphodelusPortfolio() {
   );
 
   return (
-    <main className={pageClassName}>
+    <PortfolioEasterEgg className={pageClassName}>
       <motion.div
         className={ui.ambientGlow}
         style={{ opacity: haloOpacity, y: backgroundShift }}
@@ -1110,6 +1111,6 @@ export default function DigitalAsphodelusPortfolio() {
           </div>
         </aside>
       </div>
-    </main>
+    </PortfolioEasterEgg>
   );
 }
