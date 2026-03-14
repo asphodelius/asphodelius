@@ -126,9 +126,9 @@ const ButterflyIcon = memo(function ButterflyIcon() {
 const ui = {
   backdrop: "pointer-events-none fixed inset-0 z-0 overflow-hidden",
   backdropBase:
-    "absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,168,211,0.2),transparent_27%),radial-gradient(circle_at_82%_16%,rgba(141,195,255,0.18),transparent_24%),radial-gradient(circle_at_52%_78%,rgba(140,228,191,0.16),transparent_30%),linear-gradient(180deg,rgba(6,9,15,0.96),rgba(12,16,24,0.94)_48%,rgba(11,12,18,0.98))]",
+    "absolute inset-0 opacity-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,168,211,0.2),transparent_27%),radial-gradient(circle_at_82%_16%,rgba(141,195,255,0.18),transparent_24%),radial-gradient(circle_at_52%_78%,rgba(140,228,191,0.16),transparent_30%),linear-gradient(180deg,rgba(6,9,15,0.96),rgba(12,16,24,0.94)_48%,rgba(11,12,18,0.98))]",
   backdropGlow:
-    "absolute inset-[-12%] bg-[radial-gradient(circle_at_24%_34%,rgba(255,218,128,0.16),transparent_18%),radial-gradient(circle_at_72%_58%,rgba(250,167,203,0.14),transparent_20%),radial-gradient(circle_at_56%_14%,rgba(199,181,255,0.14),transparent_16%)] blur-[42px]",
+    "absolute inset-[-12%] opacity-0 bg-[radial-gradient(circle_at_24%_34%,rgba(255,218,128,0.16),transparent_18%),radial-gradient(circle_at_72%_58%,rgba(250,167,203,0.14),transparent_20%),radial-gradient(circle_at_56%_14%,rgba(199,181,255,0.14),transparent_16%)] blur-[42px]",
   field: "pointer-events-none fixed inset-0 z-[66] overflow-hidden",
   butterfly: "absolute left-0 top-0 will-change-transform",
   sparkle: "absolute left-0 top-0 rounded-full will-change-transform",
@@ -247,11 +247,13 @@ export default function PortfolioEasterEgg({
     <main className={className} onClickCapture={handleClick}>
       <div className={ui.backdrop} aria-hidden="true">
         <motion.div
+          initial={false}
           className={ui.backdropBase}
           animate={{ opacity: unlocked ? 1 : 0, scale: unlocked ? 1 : 1.04 }}
           transition={{ duration: 0.8, ease }}
         />
         <motion.div
+          initial={false}
           className={ui.backdropGlow}
           animate={{ opacity: unlocked ? 1 : 0, y: unlocked ? 0 : 24 }}
           transition={{ duration: 1, ease }}
