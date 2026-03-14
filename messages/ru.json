@@ -30,21 +30,21 @@
         {
           "title": "Good People",
           "category": "Сайт агентства недвижимости в Новосибирске",
-          "summary": "Сайт для агентства недвижимости, выстроенный вокруг доверия, юридической безопасности сделки и персонального сопровождения клиента.",
+          "summary": "Сайт агентства недвижимости, выстроенный вокруг доверия, юридической безопасности сделки и персонального сопровождения клиента.",
           "meta": "Strategy / UI design / Frontend build / 2026",
           "href": "https://good-people.pro"
         },
         {
-          "title": "Northstar Index",
-          "category": "Редакционная аналитическая платформа",
-          "summary": "Спокойный data-продукт, где плотная отчетность превращена в ясную и читаемую поверхность для решений.",
-          "meta": "Product design / Frontend direction / 2026"
+          "title": "Growing Seed",
+          "category": "Проект в стадии роста",
+          "summary": "Этот росток ещё формируется. Скоро здесь появится новый проект.",
+          "meta": "Interface R&D / Interaction systems / In progress"
         },
         {
-          "title": "Atelier Archive",
-          "category": "Система luxury-commerce",
-          "summary": "E-commerce опыт, выстроенный как издание: между конверсией, сдержанностью и атмосферой.",
-          "meta": "Creative direction / Interaction system / 2025"
+          "title": "Next Bloom",
+          "category": "Проект в разработке",
+          "summary": "Следующий проект сейчас в разработке. Исследую новые взаимодействия между дизайном и кодом.",
+          "meta": "Design research / Code experiments / In progress"
         }
       ]
     },
@@ -62,8 +62,8 @@
       "links": [
         {
           "label": "Email",
-          "value": "hello@asphodelius.dev",
-          "href": "mailto:hello@asphodelius.dev"
+          "value": "root@asphodelius.dev",
+          "href": "mailto:root@asphodelius.dev"
         },
         {
           "label": "GitHub",

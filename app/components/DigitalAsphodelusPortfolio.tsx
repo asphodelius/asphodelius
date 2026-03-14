@@ -61,6 +61,7 @@ type Project = {
   category: string;
   summary: string;
   meta: string;
+  href?: string;
 };
 
 type Contact = {
@@ -189,6 +190,12 @@ const technologies: Technology[] = [
     leafIndex: 5,
   },
 ];
+
+const projectSkillLeavesByIndex: Record<number, readonly number[]> = {
+  0: [0, 1, 2, 3, 5],
+};
+
+const emptyProjectSkillLeaves: readonly number[] = [];
 
 const introStatementAccentMap: Record<string, IntroAccentConfig> = {
   en: {
@@ -675,6 +682,10 @@ export default function DigitalAsphodelusPortfolio() {
   const codeLines = t.raw("hero.code") as string[];
   const activeProjectLabel =
     hoveredProject !== null ? projects[hoveredProject]?.title ?? null : null;
+  const highlightedProjectSkillLeaves =
+    hoveredProject !== null
+      ? projectSkillLeavesByIndex[hoveredProject] ?? emptyProjectSkillLeaves
+      : emptyProjectSkillLeaves;
 
   const pageClassName = useMemo(
     () => cn(ui.page, showCursor && ui.pageWithCursor),
@@ -733,6 +744,7 @@ export default function DigitalAsphodelusPortfolio() {
             progress={railFlowerProgress}
             hoveredProject={hoveredProject}
             hoveredSkillLeaf={hoveredSkillLeaf}
+            highlightedSkillLeaves={highlightedProjectSkillLeaves}
             activeProjectLabel={activeProjectLabel}
             activeSkillLabel={hoveredSkillLabel}
             activeSkillAccent={hoveredSkillAccent}
@@ -922,49 +934,83 @@ export default function DigitalAsphodelusPortfolio() {
             >
               <span className={ui.microLabel}>{t("work.label")}</span>
               <div ref={workListRef} className={ui.workList}>
-                {projects.map((project, index) => (
-                  <motion.article
-                    key={project.title}
-                    className={ui.projectRow}
-                    initial={{ opacity: 0.96, y: 14 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ amount: 0.34, once: true }}
-                    transition={{
-                      duration: 0.85,
-                      ease: revealEase,
-                      delay: index * 0.08,
-                    }}
-                    onMouseEnter={() => {
-                      setHoveredProject(index);
-                      setFocusCursor("focus", t("cursor.view"));
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredProject(null);
-                      resetCursor();
-                    }}
-                    onFocus={() => {
-                      setHoveredProject(index);
-                      setFocusCursor("focus", t("cursor.view"));
-                    }}
-                    onBlur={() => {
-                      setHoveredProject(null);
-                      resetCursor();
-                    }}
-                    tabIndex={0}
-                  >
-                    <div className={ui.projectHeading}>
-                      <span className={ui.projectIndex}>0{index + 1}</span>
-                      <div>
-                        <h2 className={ui.projectTitle}>{project.title}</h2>
-                        <p className={ui.projectCategory}>{project.category}</p>
+                {projects.map((project, index) => {
+                  const isExternalProject = project.href?.startsWith("http") ?? false;
+                  const projectCursorMode: CursorMode = project.href ? "link" : "focus";
+                  const projectCursorLabel = project.href
+                    ? t("cursor.open")
+                    : t("cursor.view");
+                  const projectContent = (
+                    <>
+                      <div className={ui.projectHeading}>
+                        <span className={ui.projectIndex}>0{index + 1}</span>
+                        <div>
+                          <h2 className={ui.projectTitle}>{project.title}</h2>
+                          <p className={ui.projectCategory}>{project.category}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className={ui.projectBody}>
-                      <p className={ui.projectSummary}>{project.summary}</p>
-                      <span className={ui.projectMeta}>{project.meta}</span>
-                    </div>
-                  </motion.article>
-                ))}
+                      <div className={ui.projectBody}>
+                        <p className={ui.projectSummary}>{project.summary}</p>
+                        <span className={ui.projectMeta}>{project.meta}</span>
+                      </div>
+                    </>
+                  );
+
+                  const handleProjectEnter = () => {
+                    setHoveredProject(index);
+                    setFocusCursor(projectCursorMode, projectCursorLabel);
+                  };
+
+                  const handleProjectLeave = () => {
+                    setHoveredProject(null);
+                    resetCursor();
+                  };
+
+                  if (project.href) {
+                    return (
+                      <motion.a
+                        key={project.title}
+                        className={ui.projectRow}
+                        href={project.href}
+                        initial={{ opacity: 0.96, y: 14 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ amount: 0.34, once: true }}
+                        transition={{
+                          duration: 0.85,
+                          ease: revealEase,
+                          delay: index * 0.08,
+                        }}
+                        onMouseEnter={handleProjectEnter}
+                        onMouseLeave={handleProjectLeave}
+                        onFocus={handleProjectEnter}
+                        onBlur={handleProjectLeave}
+                        target={isExternalProject ? "_blank" : undefined}
+                        rel={isExternalProject ? "noreferrer" : undefined}
+                      >
+                        {projectContent}
+                      </motion.a>
+                    );
+                  }
+
+                  return (
+                    <motion.article
+                      key={project.title}
+                      className={ui.projectRow}
+                      initial={{ opacity: 0.96, y: 14 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ amount: 0.34, once: true }}
+                      transition={{
+                        duration: 0.85,
+                        ease: revealEase,
+                        delay: index * 0.08,
+                      }}
+                      onMouseEnter={handleProjectEnter}
+                      onMouseLeave={handleProjectLeave}
+                    >
+                      {projectContent}
+                    </motion.article>
+                  );
+                })}
               </div>
             </motion.div>
           </section>
@@ -1048,12 +1094,13 @@ export default function DigitalAsphodelusPortfolio() {
                   distortion={0.06}
                 />
               </div>
-                <StoryFlower
-                  className={ui.flowerSvg}
-                  progress={railFlowerProgress}
-                  hoveredProject={hoveredProject}
-                  hoveredSkillLeaf={hoveredSkillLeaf}
-                  activeProjectLabel={activeProjectLabel}
+              <StoryFlower
+                className={ui.flowerSvg}
+                progress={railFlowerProgress}
+                hoveredProject={hoveredProject}
+                hoveredSkillLeaf={hoveredSkillLeaf}
+                highlightedSkillLeaves={highlightedProjectSkillLeaves}
+                activeProjectLabel={activeProjectLabel}
                 activeSkillLabel={hoveredSkillLabel}
                 activeSkillAccent={hoveredSkillAccent}
                 idPrefix="rail-flower"

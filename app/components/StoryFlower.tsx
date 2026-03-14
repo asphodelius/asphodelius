@@ -7,6 +7,7 @@ type StoryFlowerProps = {
   progress: MotionValue<number>;
   hoveredProject: number | null;
   hoveredSkillLeaf: number | null;
+  highlightedSkillLeaves?: readonly number[];
   activeProjectLabel?: string | null;
   activeSkillLabel?: string | null;
   activeSkillAccent?: string | null;
@@ -91,8 +92,8 @@ const skillLeaves = [
 
 const projectBranches = [
   { path: "M180 564C142 542 112 520 84 488", cx: 84, cy: 488 },
-  { path: "M179 447C216.938 426.923 244.443 395.692 271 360", cx: 271, cy: 360 },
-  { path: "M180 348C150 330 126 306 106 274", cx: 106, cy: 274 },
+  { path: "M179 447C210 430 235 408 252 382", cx: 252, cy: 382 },
+  { path: "M180 348C156 334 136 314 121 292", cx: 121, cy: 292 },
 ] as const;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -137,6 +138,7 @@ export function StoryFlower({
   progress,
   hoveredProject,
   hoveredSkillLeaf,
+  highlightedSkillLeaves = [],
   activeProjectLabel,
   activeSkillLabel,
   activeSkillAccent,
@@ -171,10 +173,20 @@ export function StoryFlower({
   const stemDrift = useTransform(progress, [0, 1], [10, -6]);
 
   const activeSkillColor = activeSkillAccent ?? "#f5efe2";
+  const projectSkillColor = "#f5efe2";
   const branchAccent = (index: number) =>
     hoveredProject === index ? "#f5efe2" : "rgba(232, 227, 217, 0.78)";
+  const branchGlowStrokeWidth = (index: number) => (index === 0 ? 7.5 : 5.25);
+  const branchActiveStrokeWidth = (index: number) => (index === 0 ? 2.35 : 1.8);
+  const branchGlowRadius = (index: number) => (index === 0 ? 11 : 8.2);
+  const branchBudRadius = (index: number, isActive: boolean) =>
+    isActive ? (index === 0 ? 6.9 : 5.5) : 4.5;
   const skillLeafAccent = (index: number) =>
-    hoveredSkillLeaf === index ? activeSkillColor : "rgba(232, 227, 217, 0.52)";
+    hoveredSkillLeaf === index
+      ? activeSkillColor
+      : highlightedSkillLeaves.includes(index)
+        ? projectSkillColor
+        : "rgba(232, 227, 217, 0.52)";
 
   const flowerTooltip =
     hoveredSkillLeaf !== null && activeSkillLabel
@@ -296,73 +308,41 @@ export function StoryFlower({
         </g>
 
         {skillLeaves.map((leaf, index) => {
-          const isActive = hoveredSkillLeaf === index;
+          const isDirectSkillActive = hoveredSkillLeaf === index;
+          const isProjectSkillActive =
+            !isDirectSkillActive && highlightedSkillLeaves.includes(index);
+          const isActive = isDirectSkillActive || isProjectSkillActive;
+          const leafColor = isDirectSkillActive ? activeSkillColor : projectSkillColor;
 
           return (
-            <motion.g
-              key={`skill-leaf-${leaf.cx}`}
-              animate={
-                isActive
-                  ? { scale: [1, 1.03, 1], y: [0, -1.5, 0] }
-                  : { scale: 1, y: 0 }
-              }
-              transition={
-                isActive
-                  ? {
-                      duration: 1.9,
-                      ease: "easeInOut",
-                      repeat: Number.POSITIVE_INFINITY,
-                    }
-                  : { duration: 0.18, ease: "easeOut" }
-              }
-              style={{ transformOrigin: `${leaf.cx}px ${leaf.cy}px` }}
-            >
+            <g key={`skill-leaf-${leaf.cx}`}>
               {isActive ? (
                 <>
-                  <motion.path
+                  <path
                     d={leaf.path}
-                    stroke={activeSkillColor}
+                    stroke={leafColor}
                     strokeWidth="7.5"
                     fill="none"
                     filter={`url(#${activeGlowId})`}
                     vectorEffect="non-scaling-stroke"
-                    animate={{ opacity: [0.12, 0.28, 0.12] }}
-                    transition={{
-                      duration: 1.9,
-                      ease: "easeInOut",
-                      repeat: Number.POSITIVE_INFINITY,
-                    }}
+                    opacity={isDirectSkillActive ? "0.28" : "0.2"}
                   />
-                  <motion.path
+                  <path
                     d={leaf.sidePath}
-                    stroke={activeSkillColor}
+                    stroke={leafColor}
                     strokeWidth="5.5"
                     strokeLinecap="round"
                     filter={`url(#${activeGlowId})`}
                     vectorEffect="non-scaling-stroke"
-                    animate={{ opacity: [0.12, 0.26, 0.12] }}
-                    transition={{
-                      duration: 1.9,
-                      ease: "easeInOut",
-                      repeat: Number.POSITIVE_INFINITY,
-                    }}
+                    opacity={isDirectSkillActive ? "0.26" : "0.18"}
                   />
-                  <motion.circle
+                  <circle
                     cx={leaf.cx}
                     cy={leaf.cy}
                     r="8.5"
-                    fill={hexToRgba(activeSkillColor, 0.34)}
+                    fill={hexToRgba(leafColor, 0.34)}
                     filter={`url(#${activeGlowId})`}
-                    style={{ transformOrigin: `${leaf.cx}px ${leaf.cy}px` }}
-                    animate={{
-                      opacity: [0.18, 0.42, 0.18],
-                      scale: [1, 1.38, 1],
-                    }}
-                    transition={{
-                      duration: 1.9,
-                      ease: "easeInOut",
-                      repeat: Number.POSITIVE_INFINITY,
-                    }}
+                    opacity={isDirectSkillActive ? "0.42" : "0.28"}
                   />
                 </>
               ) : null}
@@ -371,7 +351,7 @@ export function StoryFlower({
                 stroke={skillLeafAccent(index)}
                 fill={
                   isActive
-                    ? hexToRgba(activeSkillColor, 0.16)
+                    ? hexToRgba(leafColor, 0.16)
                     : "rgba(232, 227, 217, 0.08)"
                 }
                 strokeWidth={isActive ? 1.55 : 1.05}
@@ -389,9 +369,9 @@ export function StoryFlower({
                 cx={leaf.cx}
                 cy={leaf.cy}
                 r={isActive ? 4.8 : 2.5}
-                fill={isActive ? activeSkillColor : "rgba(232, 227, 217, 0.52)"}
+                fill={isActive ? leafColor : "rgba(232, 227, 217, 0.52)"}
               />
-            </motion.g>
+            </g>
           );
         })}
 
@@ -430,63 +410,32 @@ export function StoryFlower({
             const isActive = hoveredProject === index;
 
             return (
-              <motion.g
-                key={`project-branch-${branch.cx}`}
-                animate={
-                  isActive
-                    ? { scale: [1, 1.018, 1], x: [0, 1.2, 0], y: [0, -1, 0] }
-                    : { scale: 1, x: 0, y: 0 }
-                }
-                transition={
-                  isActive
-                    ? {
-                        duration: 1.75,
-                        ease: "easeInOut",
-                        repeat: Number.POSITIVE_INFINITY,
-                      }
-                    : { duration: 0.18, ease: "easeOut" }
-                }
-                style={{ transformOrigin: `${branch.cx}px ${branch.cy}px` }}
-              >
+              <g key={`project-branch-${branch.cx}`}>
                 {isActive ? (
                   <>
-                    <motion.path
+                    <path
                       d={branch.path}
                       stroke="#f5efe2"
-                      strokeWidth="7.5"
+                      strokeWidth={branchGlowStrokeWidth(index)}
                       strokeLinecap="round"
                       filter={`url(#${activeGlowId})`}
                       vectorEffect="non-scaling-stroke"
-                      animate={{ opacity: [0.12, 0.24, 0.12] }}
-                      transition={{
-                        duration: 1.75,
-                        ease: "easeInOut",
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
+                      opacity={index === 0 ? "0.24" : "0.16"}
                     />
-                    <motion.circle
+                    <circle
                       cx={branch.cx}
                       cy={branch.cy}
-                      r="11"
+                      r={branchGlowRadius(index)}
                       fill="rgba(245, 239, 226, 0.3)"
                       filter={`url(#${activeGlowId})`}
-                      style={{ transformOrigin: `${branch.cx}px ${branch.cy}px` }}
-                      animate={{
-                        opacity: [0.16, 0.38, 0.16],
-                        scale: [1, 1.34, 1],
-                      }}
-                      transition={{
-                        duration: 1.75,
-                        ease: "easeInOut",
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
+                      opacity={index === 0 ? "0.38" : "0.22"}
                     />
                   </>
                 ) : null}
                 <motion.path
                   d={branch.path}
                   stroke={branchAccent(index)}
-                  strokeWidth={isActive ? 2.35 : 1.15}
+                  strokeWidth={isActive ? branchActiveStrokeWidth(index) : 1.15}
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
                   style={{ opacity: branchOpacity[index] }}
@@ -494,11 +443,11 @@ export function StoryFlower({
                 <motion.circle
                   cx={branch.cx}
                   cy={branch.cy}
-                  r={isActive ? 6.9 : 4.5}
+                  r={branchBudRadius(index, isActive)}
                   fill={isActive ? "#f5efe2" : "rgba(232, 227, 217, 0.72)"}
                   style={{ opacity: branchBudOpacity }}
                 />
-              </motion.g>
+              </g>
             );
           })}
         </g>
@@ -510,29 +459,13 @@ export function StoryFlower({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <motion.path
+            <path
               d={`M${flowerTooltip.anchor.cx} ${flowerTooltip.anchor.cy} Q${tooltipLayout.controlX} ${flowerTooltip.anchor.cy} ${tooltipLayout.attachX} ${tooltipLayout.attachY}`}
-              stroke={hexToRgba(flowerTooltip.tone, 0.5)}
+              stroke={hexToRgba(flowerTooltip.tone, 0.58)}
               strokeWidth="1"
               strokeLinecap="round"
               fill="none"
               vectorEffect="non-scaling-stroke"
-              animate={{ opacity: [0.3, 0.7, 0.3] }}
-              transition={{
-                duration: 1.8,
-                ease: "easeInOut",
-                repeat: Number.POSITIVE_INFINITY,
-              }}
-            />
-            <rect
-              x={tooltipLayout.rectX - 2}
-              y={tooltipLayout.rectY - 2}
-              width={tooltipLayout.width + 4}
-              height={tooltipLayout.height + 4}
-              rx="16"
-              fill={hexToRgba(flowerTooltip.tone, 0.24)}
-              filter={`url(#${activeGlowId})`}
-              opacity="0.86"
             />
             <rect
               x={tooltipLayout.rectX}
@@ -541,8 +474,8 @@ export function StoryFlower({
               height={tooltipLayout.height}
               rx="15"
               fill="rgba(8, 8, 8, 0.84)"
-              stroke="rgba(245, 239, 226, 0.14)"
-              strokeWidth="0.8"
+              stroke={hexToRgba(flowerTooltip.tone, 0.72)}
+              strokeWidth="1"
             />
             <text
               x={tooltipLayout.textX}

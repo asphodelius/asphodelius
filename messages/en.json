@@ -30,21 +30,21 @@
         {
           "title": "Good People",
           "category": "Real estate agency website in Novosibirsk",
-          "summary": "A trust-led real estate website built around legal safety, personal guidance, and conversion-focused storytelling.",
+          "summary": "A real estate website built around trust, legal safety, and personal client guidance.",
           "meta": "Strategy / UI design / Frontend build / 2026",
           "href": "https://good-people.pro"
         },
         {
-          "title": "Northstar Index",
-          "category": "Editorial analytics platform",
-          "summary": "A quiet data product where dense reporting is shaped into a calm, readable decision surface.",
-          "meta": "Product design / Frontend direction / 2026"
+          "title": "Growing Seed",
+          "category": "Work in progress",
+          "summary": "This seed is still growing. A new project will bloom here soon.",
+          "meta": "Interface R&D / Interaction systems / In progress"
         },
         {
-          "title": "Atelier Archive",
-          "category": "Luxury commerce system",
-          "summary": "An e-commerce experience built like a publication, balancing conversion with restraint and atmosphere.",
-          "meta": "Creative direction / Interaction system / 2025"
+          "title": "Next Bloom",
+          "category": "Currently in development",
+          "summary": "The next bloom is in progress. Exploring new interaction ideas.",
+          "meta": "Design research / Code experiments / In progress"
         }
       ]
     },
@@ -62,8 +62,8 @@
       "links": [
         {
           "label": "Email",
-          "value": "hello@asphodelius.dev",
-          "href": "mailto:hello@asphodelius.dev"
+          "value": "root@asphodelius.dev",
+          "href": "mailto:root@asphodelius.dev"
         },
         {
           "label": "GitHub",
