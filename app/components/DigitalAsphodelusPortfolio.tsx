@@ -24,6 +24,9 @@ import {
   useTransform,
 } from "framer-motion";
 import Lenis from "lenis";
+import { FaGithub as ContactGithub, FaTelegramPlane } from "react-icons/fa";
+import type { IconType } from "react-icons/lib";
+import { MdEmail } from "react-icons/md";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -199,6 +202,12 @@ const projectSkillLeavesByIndex: Record<number, readonly number[]> = {
 
 const emptyProjectSkillLeaves: readonly number[] = [];
 
+const contactIconMap: Record<string, IconType> = {
+  github: ContactGithub,
+  mail: MdEmail,
+  telegram: FaTelegramPlane,
+};
+
 const introStatementAccentMap: Record<string, IntroAccentConfig> = {
   en: {
     highlight: "atmosphere",
@@ -234,6 +243,22 @@ function splitTextFragment(text: string, fragment: string) {
     before: text.slice(0, index),
     target: text.slice(index, index + fragment.length),
   };
+}
+
+function getContactIcon(contact: Contact) {
+  if (contact.href.startsWith("mailto:")) {
+    return contactIconMap.mail;
+  }
+
+  if (contact.href.includes("github.com")) {
+    return contactIconMap.github;
+  }
+
+  if (contact.href.includes("t.me") || contact.label.toLowerCase() === "telegram") {
+    return contactIconMap.telegram;
+  }
+
+  return contactIconMap.mail;
 }
 
 const ui = {
@@ -330,11 +355,14 @@ const ui = {
     "m-0 max-w-[27rem] text-[1.05rem] leading-[1.8] text-[#bcbcc4] max-[640px]:max-w-none",
   contactLinks: "grid gap-4 self-end",
   contactLink:
-    "grid gap-[0.3rem] border-t border-white/8 py-[1.1rem] transition-all duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-[0.45rem] hover:text-[#e8e3d9] hover:border-[rgba(232,227,217,0.28)] focus-visible:translate-x-[0.45rem] focus-visible:text-[#e8e3d9] focus-visible:border-[rgba(232,227,217,0.28)] last:border-b last:border-white/8",
+    "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-[0.3rem] border-t border-white/8 py-[1.1rem] transition-all duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-[0.45rem] hover:text-[#e8e3d9] hover:border-[rgba(232,227,217,0.28)] focus-visible:translate-x-[0.45rem] focus-visible:text-[#e8e3d9] focus-visible:border-[rgba(232,227,217,0.28)] last:border-b last:border-white/8",
+  contactLinkContent: "grid gap-[0.3rem] min-w-0",
   contactLinkLabel:
     "text-[0.72rem] uppercase tracking-[0.18em] text-[#8b8b92] [font-family:var(--font-mono),IBM_Plex_Mono,monospace]",
   contactLinkValue:
     "text-[clamp(1.35rem,2vw,1.8rem)] font-medium leading-[1.2] tracking-[-0.03em] max-[640px]:text-[1.2rem]",
+  contactLinkIcon:
+    "mt-[0.2rem] size-[1.05rem] text-[#9f9685] transition-colors duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/contact:text-[#e8e3d9] group-focus-visible/contact:text-[#e8e3d9]",
   visualRail: "relative z-[1] max-[980px]:hidden",
   visualSticky: "sticky top-0 pb-[7vh]",
   mobileVisualBackdrop:
@@ -1126,22 +1154,29 @@ export default function DigitalAsphodelusPortfolio() {
                 <p className={ui.contactHeading}>{t("contact.heading")}</p>
               </div>
               <div className={ui.contactLinks}>
-                {contacts.map((contact) => (
-                  <a
-                    key={contact.label}
-                    className={ui.contactLink}
-                    href={contact.href}
-                    target={contact.href.startsWith("http") ? "_blank" : undefined}
-                    rel={contact.href.startsWith("http") ? "noreferrer" : undefined}
-                    onMouseEnter={() => setFocusCursor("link", t("cursor.contact"))}
-                    onMouseLeave={resetCursor}
-                    onFocus={() => setFocusCursor("link", t("cursor.contact"))}
-                    onBlur={resetCursor}
-                  >
-                    <span className={ui.contactLinkLabel}>{contact.label}</span>
-                    <strong className={ui.contactLinkValue}>{contact.value}</strong>
-                  </a>
-                ))}
+                {contacts.map((contact) => {
+                  const Icon = getContactIcon(contact);
+
+                  return (
+                    <a
+                      key={contact.label}
+                      className={cn(ui.contactLink, "group/contact")}
+                      href={contact.href}
+                      target={contact.href.startsWith("http") ? "_blank" : undefined}
+                      rel={contact.href.startsWith("http") ? "noreferrer" : undefined}
+                      onMouseEnter={() => setFocusCursor("link", t("cursor.contact"))}
+                      onMouseLeave={resetCursor}
+                      onFocus={() => setFocusCursor("link", t("cursor.contact"))}
+                      onBlur={resetCursor}
+                    >
+                      <Icon aria-hidden="true" className={ui.contactLinkIcon} />
+                      <span className={ui.contactLinkContent}>
+                        <span className={ui.contactLinkLabel}>{contact.label}</span>
+                        <strong className={ui.contactLinkValue}>{contact.value}</strong>
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
             </motion.div>
           </section>
