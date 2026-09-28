@@ -1,12 +1,22 @@
 import { clamp, rng, type Pt } from "./threads";
-import { bez, mid, PEONY, pol, ROSE, Stitcher, type Stitch } from "./stitcher";
+import { bez, mid, PEONY, pol, ROSE, Stitcher, type Flower, type Head, type Stitch } from "./stitcher";
 
 export const CENTRE: Pt = [0.5, 0.48];
 const RX = 0.385, RY = 0.415;
 
 type MainFlower = { kind: "asph" | "rose" | "peony" | "pansyP" | "pansyB"; c: Pt; r: number };
 
-export function buildBouquet(seed = 20260928) {
+export type Bouquet = { stitches: Stitch[]; heads: Head[]; flowers: Flower[]; stitcher: Stitcher };
+
+export function buildBouquet(seed = 20260928): Bouquet {
+  const g = bouquetSteps(seed);
+  for (;;) {
+    const r = g.next();
+    if (r.done) return r.value;
+  }
+}
+
+export function* bouquetSteps(seed = 20260928): Generator<void, Bouquet, void> {
   const st = new Stitcher(rng(seed));
   const R = st.rand;
 
@@ -25,19 +35,21 @@ export function buildBouquet(seed = 20260928) {
     r: r * 0.93,
   }));
 
-  main.forEach(({ kind, c, r }, i) => {
+  for (const [i, { kind, c, r }] of main.entries()) {
     st.claim(c[0], c[1], r * 1.02);
     if (kind === "asph") st.asphodel(c, r, R() * 1.2, 6 + i * 0.01);
     else if (kind === "rose") st.rose(c, r, ROSE, 5 + i * 0.01);
     else if (kind === "peony") st.rose(c, r, PEONY, 5 + i * 0.01);
     else if (kind === "pansyP") st.pansy(c, r, -0.12, ["pl1", "pl2", "pl3"], ["py1", "py2", "py3", "pl2"], 4 + i * 0.01);
     else st.pansy(c, r, 0.12, ["pb1", "pb2", "pb3"], ["py1", "py2", "py3", "pb2"], 4 + i * 0.01);
-  });
+    yield;
+  }
   st.claim(0.5, 0.13, 0.042);
   st.rosebud([0.5, 0.165], 0.058, -Math.PI / 2, ROSE, 4.5);
   for (const [b, c, t] of [[[0.42, 0.325], [0.392, 0.37], [0.378, 0.425]], [[0.58, 0.33], [0.608, 0.375], [0.622, 0.43]]] as Pt[][]) {
     st.claim(c[0], c[1] + 0.012, 0.04);
     st.bells(b, c, t, 4.2);
+    yield;
   }
 
   const leafSpecs: [number, number, number, number, number][] = [
@@ -50,13 +62,15 @@ export function buildBouquet(seed = 20260928) {
     [0, 2.5, 0.06, 0.026, 0.008], [0, 0.64, 0.06, 0.026, -0.008],
     [0, -2.15, 0.05, 0.024, -0.006], [0, -0.99, 0.05, 0.024, 0.006],
   ];
-  leafSpecs.forEach(([fi, a, len, hw, bend], i) => {
+  for (const [i, [fi, a, len, hw, bend]] of leafSpecs.entries()) {
     const { c, r } = main[fi], b = pol(c, a, r * 0.6), t = pol(c, a, r + len);
     st.leaf(b, pol(mid(b, t), a + Math.PI / 2, bend), t, hw, 2 + i * 0.001, i % 3 === 2 ? ["lg1", "lg2", "lg2", "lg3"] : ["lg0", "lg1", "lg2", "lg3"]);
-  });
+    if (i % 4 === 3) yield;
+  }
 
-  const GN = 160, GC = 1 / GN, cov = new Uint8Array(GN * GN);
+  const GN = 160, GC = 1 / GN, NC = GN * GN, cov = new Uint8Array(NC), field = new Float32Array(NC), core = new Uint8Array(NC);
   const inCore = (x: number, y: number) => ((x - CENTRE[0]) / RX) ** 2 + ((y - CENTRE[1]) / RY) ** 2 < 1;
+  for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) core[j * GN + i] = inCore((i + 0.5) * GC, (j + 0.5) * GC) ? 1 : 0;
   let stamped = 0;
   const stampSeg = (ax: number, ay: number, bx: number, by: number, r: number) => {
     const x0 = Math.max(0, Math.floor((Math.min(ax, bx) - r) * GN)), x1 = Math.min(GN - 1, Math.floor((Math.max(ax, bx) + r) * GN));
@@ -77,8 +91,8 @@ export function buildBouquet(seed = 20260928) {
     }
   };
   const widestGap = (): [number, number, number] => {
-    const D = new Float32Array(GN * GN), q = Math.SQRT2;
-    for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; D[k] = cov[k] || !inCore((i + 0.5) * GC, (j + 0.5) * GC) ? 0 : 1e9; }
+    const D = field, q = Math.SQRT2;
+    for (let k = 0; k < NC; k++) D[k] = cov[k] || !core[k] ? 0 : 1e9;
     for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) {
       const k = j * GN + i; if (!D[k]) continue; let v = D[k];
       if (i > 0) v = Math.min(v, D[k - 1] + 1);
@@ -104,6 +118,7 @@ export function buildBouquet(seed = 20260928) {
   const FILL = [["bl0", "bl1", "bl3", "ys2"], ["wb1", "wb2", "wb3", "ys1"], ["ys0", "ys1", "ys3", "orn"], ["bl0", "bl1", "bl3", "ys2"], ["pk2", "pk4", "pk5", "ys1"]];
   let fk = 0, lk = 0;
   for (let it = 0; it < 220; it++) {
+    yield;
     const [x, y, d] = widestGap();
     if (d < 0.011) break;
     if (d >= 0.03 && fk < 22) {
@@ -141,6 +156,7 @@ export function buildBouquet(seed = 20260928) {
     if (![0.72, 0.86, 1].every(t => bare(bez(base, ctrl, tip, t)))) continue;
     st.sprig(base, ctrl, tip, kinds[ki++ % kinds.length], 1);
     stampNew();
+    yield;
   }
 
   const S = st.out, eMin: number[] = [];

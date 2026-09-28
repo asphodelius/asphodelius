@@ -19,7 +19,19 @@ function aspectIndex(A: number) {
 }
 
 export function prepare(list: Stitch[]) {
-  for (const s of list) {
+  prepareRange(list, 0, list.length);
+}
+
+export function* prepareSteps(list: Stitch[], chunk = 2500): Generator<void, void, void> {
+  for (let from = 0; from < list.length; from += chunk) {
+    prepareRange(list, from, Math.min(list.length, from + chunk));
+    yield;
+  }
+}
+
+function prepareRange(list: Stitch[], from: number, to: number) {
+  for (let i = from; i < to; i++) {
+    const s = list[i];
     const a = s.t === "knot" ? s.p : s.p0, b = s.t === "knot" ? s.p : s.p1;
     s.mx = (a[0] + b[0]) / 2; s.my = (a[1] + b[1]) / 2;
     if (s.t !== "q") continue;
@@ -51,6 +63,7 @@ export class Renderer {
   private bases = new WeakMap<CanvasRenderingContext2D, [number, number, number]>();
   private scratch = new Map<string, HTMLCanvasElement>();
   private bb: number[] | null = null;
+  private epoch = 0;
 
   constructor(private readonly sources: () => Stitch[][]) {}
 
@@ -73,10 +86,10 @@ export class Renderer {
 
   resize(threadPx: number) {
     const sh = clamp(Math.round(threadPx * 1.35), 8, 22);
-    if (sh !== this.spriteSize) { this.spriteSize = sh; this.fields.clear(); this.atlases = {}; }
+    if (sh !== this.spriteSize) { this.spriteSize = sh; this.fields.clear(); this.atlases = {}; this.epoch++; }
     this.scratch.clear();
   }
-  resetAtlases() { this.atlases = {}; }
+  resetAtlases() { this.atlases = {}; this.epoch++; }
   hasAtlas(m: Mode) { return !!this.atlases[m]; }
 
   private field(ai: number, v: number): Field {
@@ -102,9 +115,20 @@ export class Renderer {
     return f;
   }
 
+  private lengthOf(ai: number) { return Math.max(this.spriteSize, Math.round(this.spriteSize * ASPECTS[ai])); }
+
   atlas(m: Mode): Atlas {
+    const g = this.atlasSteps(m);
+    for (;;) {
+      const r = g.next();
+      if (r.done) return r.value;
+    }
+  }
+
+  *atlasSteps(m: Mode): Generator<void, Atlas, void> {
     const cached = this.atlases[m];
     if (cached) return cached;
+    const epoch = this.epoch;
     const SH = this.spriteSize, need = new Map<Rgb, Set<number>>(), shadows = new Set<number>();
     const want = (rgb: Rgb, idx: number) => { let s = need.get(rgb); if (!s) { s = new Set(); need.set(rgb, s); } s.add(idx); };
     for (const list of this.sources()) for (const s of list) {
@@ -114,18 +138,27 @@ export class Renderer {
       want(threadColour(s.key, false, m), idx);
       if (s.asph) want(threadColour(s.key, true, m), idx);
     }
-    const AW = 2048, RH = SH + 3, jobs: [boolean, Rgb | null, number, number, number, Field][] = [];
+    const AW = 2048, RH = SH + 3, jobs: [boolean, Rgb | null, number, number, number, number, number][] = [];
     let x = 2, y = 2;
-    const put = (body: boolean, rgb: Rgb | null, idx: number, f: Field) => {
-      if (x + f.Lp + 2 > AW) { x = 2; y += RH; }
-      jobs.push([body, rgb, idx, x, y, f]);
-      x += f.Lp + 3;
+    const put = (body: boolean, rgb: Rgb | null, idx: number, ai: number, v: number) => {
+      const Lp = this.lengthOf(ai);
+      if (x + Lp + 2 > AW) { x = 2; y += RH; }
+      jobs.push([body, rgb, idx, x, y, ai, v]);
+      x += Lp + 3;
     };
-    for (const [rgb, set] of need) for (const idx of set) { const q = (idx / 3) | 0; put(true, rgb, idx, this.field(q >> 1, q & 1)); }
-    for (const ai of shadows) put(false, null, ai, this.field(ai, 0));
+    for (const [rgb, set] of need) for (const idx of set) { const q = (idx / 3) | 0; put(true, rgb, idx, q >> 1, q & 1); }
+    for (const ai of shadows) put(false, null, ai, ai, 0);
+    yield;
+    if (epoch !== this.epoch) return yield* this.atlasSteps(m);
     const canvas = makeCanvas(AW, y + RH), g = context(canvas), img = g.createImageData(AW, y + RH), d = img.data;
     const map = new Map<Rgb, Sprite[]>(), shd: Sprite[] = [], dim = m === "dark" ? 0.8 : 1;
-    for (const [body, rgb, idx, px, py, f] of jobs) {
+    let done = 0;
+    for (const [body, rgb, idx, px, py, ai, fv] of jobs) {
+      const known = this.fields.has(ai * 2 + fv), f = this.field(ai, fv);
+      if (!known || ++done % 24 === 0) {
+        yield;
+        if (epoch !== this.epoch) return yield* this.atlasSteps(m);
+      }
       const lv = body ? LEVELS[idx % 3] * dim : 0;
       for (let yy = 0; yy < SH; yy++) {
         let o = ((py + yy) * AW + px) * 4, i = yy * f.Lp;

@@ -1,7 +1,8 @@
-import { buildBouquet } from "./bouquet";
+import { bouquetSteps } from "./bouquet";
 import { buildFrame, framePad } from "./frame";
-import { context, makeCanvas, prepare, Renderer, type Box } from "./render";
-import type { Flower, Stitch } from "./stitcher";
+import { context, makeCanvas, prepare, prepareSteps, Renderer, type Box } from "./render";
+import { runSliced } from "./slice";
+import type { Flower, Head, Stitch } from "./stitcher";
 import { clamp, LINEN, LX, LY, rgbStr, rng, threadColour, type Mode, type Pt, type Rgb } from "./threads";
 import { ICONS, type IconStitch } from "./icons";
 
@@ -28,7 +29,7 @@ type Line = { el: Element; x0: number; x1: number; y: number; t: number };
 type Rect = { left: number; top: number; width: number; height: number };
 type Hover = { on: boolean; t: number };
 
-const SEW_TIME = 6, DUR = 0.16, RN = 22;
+const SEW_TIME = 6, DUR = 0.16, RN = 22, MIN_GAP = 12;
 const THREAD_COL = ["rs2", "bl1", "lg2", "ys1", "pk2", "pl2", "orn"];
 const BF_WING = [["bl0", "bl1", "bl2", "bl3", "pray"], ["pl1", "pl2", "pl3", "pl3", "pray"]];
 
@@ -36,21 +37,16 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   const { panel, root } = opts;
   const ctx = context(canvas);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const bouquet = buildBouquet();
-  const S = bouquet.stitches, heads = bouquet.heads;
-  prepare(S);
-  const NON = S.filter(s => !s.asph), ASP = S.filter(s => s.asph);
-  let F: Stitch[] = [], FS = 1, frameKey = "";
+  let S: Stitch[] = [], heads: Head[] = [], NON: Stitch[] = [], ASP: Stitch[] = [], runs: Run[] = [];
+  let F: Stitch[] = [], FS = 1, frameKey = "", ready = false, sewLo = 0;
   const R = new Renderer(() => [S, F]);
   let mode: Mode = opts.mode;
   R.mode = mode;
   const colour = (key: string, gold = false) => threadColour(key, gold, mode);
 
-  const runs: Run[] = bouquet.flowers.map(f => ({ ...f, list: [], start: 0, end: 0, done: false, sprite: makeCanvas(1, 1), sx: 0, sy: 0, sz: 0 }));
-  for (const s of ASP) runs[s.fl].list.push(s);
-
   let W = 0, H = 0, DH = 0, DPR = 1;
-  const sy = () => scrollY;
+  let scrollPos = 0;
+  const sy = () => scrollPos;
   let linen: CanvasPattern | null = null;
   let bg = makeCanvas(1, 1), frameC: HTMLCanvasElement | null = null, low: HTMLCanvasElement | null = null, full: HTMLCanvasElement | null = null;
   const cacheBox = new WeakMap<HTMLCanvasElement, CacheBox>();
@@ -150,7 +146,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     };
   }
 
-  function layout() {
+  function metrics() {
+    scrollPos = scrollY;
     DPR = Math.min(2, devicePixelRatio || 1); W = canvas.clientWidth || innerWidth; H = canvas.clientHeight || innerHeight;
     canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
     R.setBase(ctx, DPR, 0, 0);
@@ -158,6 +155,10 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     const r = panel.getBoundingClientRect(), s = Math.min(r.width, r.height) * 0.97;
     R.box = { x: r.left + scrollX + (r.width - s) / 2, y: r.top + sy() + (r.height - s) / 2, s };
     R.resize(0.0062 * s * DPR);
+  }
+
+  function layout() {
+    metrics();
     if (frameKey !== `${W}x${H}` || !R.hasAtlas(mode)) rebuildFrame();
     linen = makeLinen(); paintBg();
     const hurry = holdSnap;
@@ -174,7 +175,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   function sewAll() {
     const now = performance.now() / 1000;
     S.forEach((s, i) => { s.c0 = null; s.c1 = colour(s.key, gp && s.asph); s.t1 = now + (reduced ? -1 : (i / S.length) * SEW_TIME); });
-    sewing = true; pending = S.length; job = null; recomposeAt = 0;
+    sewing = true; pending = S.length; sewLo = 0; job = null; recomposeAt = 0;
     low = makeCache(); full = makeCache();
     kick();
   }
@@ -235,7 +236,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
 
   function idleAtlas() {
     const other: Mode = mode === "dark" ? "light" : "dark";
-    const run = () => { if (!destroyed && !R.hasAtlas(other)) R.atlas(other); };
+    const run = () => { if (!destroyed && !R.hasAtlas(other)) runSliced(R.atlasSteps(other), 6, () => destroyed, () => {}); };
     if ("requestIdleCallback" in window) window.requestIdleCallback(run); else setTimeout(run, 200);
   }
 
@@ -272,19 +273,19 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       if (!busy) { rethreading = false; rebuildFull(); }
     } else {
       if (pending && low && full) {
-        const gl = context(low), gf = context(full);
-        for (const s of S) {
-          if (!s.c1 || t < s.t1 + DUR) continue;
-          s.c0 = s.c1; s.c1 = null; pending--;
+        const gl = context(low), gf = context(full), started = performance.now();
+        while (sewLo < S.length) {
+          const s = S[sewLo];
+          if (!s.c1 || t < s.t1) break;
+          if ((sewLo & 63) === 63 && performance.now() - started > 9) break;
+          s.c0 = s.c1; s.c1 = null; pending--; sewLo++;
           if (!s.asph) R.stitch(gl, s, s.c0, 1, "under");
           R.stitch(gf, s, s.c0, 1, "under");
         }
       }
       blit(full);
-      if (pending) {
-        busy = true;
-        for (const s of S) { if (!s.c1) continue; const p = clamp((t - s.t1) / DUR, 0, 1); if (p > 0) R.stitch(ctx, s, s.c1, p, "over"); }
-      } else if (sewing) { sewing = false; settle = true; busy = true; }
+      if (pending) busy = true;
+      else if (sewing) { sewing = false; settle = true; busy = true; }
     }
     screen();
     if (snapshot) {
@@ -300,10 +301,10 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     return busy || !!recomposeAt || !!job;
   }
 
-  function kick() { if (!raf && !destroyed) raf = requestAnimationFrame(loop); }
+  function kick() { if (!raf && !destroyed && ready) raf = requestAnimationFrame(loop); }
   function loop(now: number) {
     raf = 0;
-    if (lowPower && now - lastDraw < 32) { kick(); return; }
+    if (now - lastDraw < (lowPower ? 32 : ptr.in && ptr.onCloth ? 0 : MIN_GAP)) { kick(); return; }
     lowPower = false; lastDraw = now;
     if (draw(now)) kick();
   }
@@ -545,7 +546,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     return busy || !sewing;
   }
 
-  let lines: Line[] = [], uiC: HTMLCanvasElement | null = null, uiDirty = true, uiAnim = false;
+  let lines: Line[] = [], uiC: HTMLCanvasElement | null = null, uiS: HTMLCanvasElement | null = null, uiDirty = true, uiAnim = false;
   let fiRect: { cx: number; base: number; xTop: number; fs: number } | null = null, logoRect: Rect | null = null;
   const hovers = new WeakMap<Element, Hover>();
   const iconStitches: Record<string, IconStitch[]> = Object.fromEntries(Object.entries(ICONS).map(([k, f]) => [k, f()]));
@@ -553,7 +554,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
 
   function measure() {
     uiDirty = true;
-    const oy = sy();
+    scrollPos = scrollY;
+    const oy = scrollPos;
     DH = Math.min(8000, Math.max(H, Math.ceil(document.documentElement.scrollHeight)));
     const fi = root.querySelector("[data-fi]");
     fiRect = null;
@@ -635,11 +637,18 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
 
   function paintUi(now: number) {
     const uh = Math.round(DH * DPR);
-    if (!uiC || uiC.width !== canvas.width || uiC.height !== uh) { uiC = makeCanvas(canvas.width, uh); uiDirty = true; }
+    if (!uiC || !uiS || uiC.width !== canvas.width || uiC.height !== uh) {
+      uiC = makeCanvas(canvas.width, uh); uiS = makeCanvas(canvas.width, uh); uiDirty = true;
+    }
+    if (uiDirty) {
+      const g = context(uiS);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, uiS.width, uiS.height); R.setBase(g, DPR, 0, 0);
+      inPx(() => { drawIcons(g); drawName(g); });
+    }
     if (uiDirty || uiAnim) {
       const g = context(uiC);
-      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, uiC.width, uiC.height); R.setBase(g, DPR, 0, 0);
-      inPx(() => { uiAnim = drawLines(g, now); drawIcons(g); drawName(g); });
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, uiC.width, uiC.height); g.drawImage(uiS, 0, 0); R.setBase(g, DPR, 0, 0);
+      inPx(() => { uiAnim = drawLines(g, now); });
       uiDirty = false;
     }
     ctx.drawImage(uiC, 0, 0, W, DH);
@@ -690,12 +699,19 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   const onOut = (e: PointerEvent) => setHover(e.target, false, e.relatedTarget);
   const onFocusIn = (e: FocusEvent) => setHover(e.target, true, null);
   const onFocusOut = (e: FocusEvent) => setHover(e.target, false, null);
-  const onScroll = (e: Event) => { lowPower = false; if (e.target === document) kick(); else measure(); };
+  const onScroll = (e: Event) => {
+    lowPower = false;
+    if (e.target === document) { scrollPos = scrollY; kick(); } else measure();
+  };
   let resizeTimer = 0;
-  const onResize = () => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => (canvas.clientWidth === W && canvas.clientHeight === H ? measure() : layout()), 100); };
+  const onResize = () => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => {
+      if (!ready) return;
+      if (canvas.clientWidth === W && canvas.clientHeight === H) measure(); else layout();
+    }, 100);
+  };
   let relayoutFrame = 0;
   const schedule = () => { cancelAnimationFrame(relayoutFrame); relayoutFrame = requestAnimationFrame(() => { snap(); layout(); }); };
-  const panelObserver = new ResizeObserver(() => { if (W) schedule(); });
+  const panelObserver = new ResizeObserver(() => { if (ready) schedule(); });
   const domObserver = new MutationObserver(() => measure());
   const onFonts = () => measure();
 
@@ -715,19 +731,51 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   document.fonts?.addEventListener("loadingdone", onFonts);
   document.fonts?.ready.then(() => { if (!destroyed) measure(); });
 
-  layout();
-  sewAll();
+  function* boot(): Generator<void, void, void> {
+    const steps = bouquetSteps();
+    let r = steps.next();
+    while (!r.done) { yield; r = steps.next(); }
+    const b = r.value;
+    S = b.stitches; heads = b.heads;
+    yield* prepareSteps(S);
+    NON = S.filter(s => !s.asph); ASP = S.filter(s => s.asph);
+    runs = b.flowers.map(f => ({ ...f, list: [], start: 0, end: 0, done: false, sprite: makeCanvas(1, 1), sx: 0, sy: 0, sz: 0 }));
+    for (const s of ASP) runs[s.fl].list.push(s);
+    yield;
+    metrics();
+    const startMode = mode;
+    const fr = buildFrame(W, H);
+    F = fr.stitches; FS = fr.scale; frameKey = `${W}x${H}`;
+    yield;
+    yield* prepareSteps(F);
+    R.resetAtlases();
+    yield* R.atlasSteps(mode);
+    if (F.length) {
+      const target = makeCache();
+      const step = R.withBox({ x: 0, y: 0, s: FS }, () => R.composer(target, F, s => colour(s.key)));
+      while (!step(performance.now() + 8)) yield;
+      frameC = target;
+    }
+    yield;
+    if (mode !== startMode) { R.resetAtlases(); R.atlas(mode); composeFrame(); }
+    ready = true;
+    layout();
+    sewAll();
+  }
+
+  runSliced(boot(), 9, () => destroyed, () => {});
 
   return {
     setMode(m) {
       if (m === mode) return;
+      if (!ready) { mode = m; R.mode = m; return; }
       snap();
       mode = m; R.mode = m;
       linen = makeLinen();
       recolour();
       kick();
     },
-    setHighlight(on) { if (on !== gp) rethread(on); },
+    setHighlight(on) { if (on === gp) return; if (ready) rethread(on); else gp = on; },
     unpick() { if (sewn.length) { unpicking = performance.now(); kick(); } },
     measure,
     destroy() {
