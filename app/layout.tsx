@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://asphodelius.dev"),
   title: "asphodelius",
   description: "Frontend developer. I build interfaces with React, Next.js and TypeScript.",
+  openGraph: { type: "website", siteName: "asphodelius" },
 };
 
 export const viewport: Viewport = {

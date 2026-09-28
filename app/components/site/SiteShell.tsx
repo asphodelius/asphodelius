@@ -105,6 +105,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             {t("projectsLink")}
           </Link>
           <NextLink href="/resume" data-stitch="">{t("resume")}</NextLink>
+          <a href="/resume.pdf" download="Nikita-Sudorgin-Frontend-Developer.pdf" aria-label={t("resumePdfLabel")} data-stitch="">{t("resumePdf")}</a>
         </nav>
 
         <div className={styles.foot}>

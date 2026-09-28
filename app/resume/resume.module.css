@@ -406,6 +406,13 @@
     margin: 10mm 12mm;
   }
 
+  :global(html[data-mode]),
+  :global(html[data-mode]) :global(body) {
+    color-scheme: light;
+    background: #ffffff;
+    margin: 0;
+  }
+
   .page {
     width: auto;
     height: auto;

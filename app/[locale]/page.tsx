@@ -11,6 +11,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: t("title"),
     description: t("description"),
     alternates: { canonical: `/${locale}`, languages: { ru: "/ru", en: "/en" } },
+    openGraph: { type: "website", siteName: "asphodelius", url: `/${locale}`, locale: locale === "ru" ? "ru_RU" : "en_US", title: t("title"), description: t("description"), images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "asphodelius" }] },
+    twitter: { card: "summary_large_image", title: t("title"), description: t("description"), images: ["/opengraph-image.png"] },
   };
 }
 

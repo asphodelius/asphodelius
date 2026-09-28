@@ -4,6 +4,8 @@
     "navLabel": "Sections",
     "projectsLink": "Projects",
     "resume": "Resume",
+    "resumePdf": "PDF",
+    "resumePdfLabel": "Download resume as PDF",
     "close": "Close",
     "themeLight": "Light linen",
     "themeDark": "Dark linen",

@@ -10,6 +10,16 @@ export const metadata: Metadata = {
     title: "Никита Судоргин — Frontend Developer",
     description: "Frontend-разработчик: React, TypeScript, Next.js, Tailwind CSS.",
     type: "profile",
+    siteName: "asphodelius",
+    url: "/resume",
+    locale: "ru_RU",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "asphodelius" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Никита Судоргин — Frontend Developer",
+    description: "Frontend-разработчик: React, TypeScript, Next.js, Tailwind CSS.",
+    images: ["/opengraph-image.png"],
   },
 };
 

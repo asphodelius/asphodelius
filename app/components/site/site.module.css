@@ -1,6 +1,6 @@
 .site {
   --text: #2b2a28;
-  --muted: #6f6c66;
+  --muted: #5a5751;
   --line: rgba(43, 42, 40, 0.3);
   --focus: #9e4a36;
   --display: var(--font-unbounded), system-ui, sans-serif;
@@ -95,7 +95,7 @@
   box-shadow: inset -1px -1px 0 rgba(0, 0, 0, 0.25);
 }
 
-.more { display: flex; gap: 22px; font-family: var(--display); font-size: calc(16px * var(--dk)); }
+.more { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--display); font-size: calc(16px * var(--dk)); }
 
 .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
 .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
