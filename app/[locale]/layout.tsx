@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { SiteShell } from "../components/site/SiteShell";
 
 type LocaleLayoutProps = {
   children: ReactNode;
@@ -13,10 +14,9 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export default async function LocaleLayout({
-  children,
-  params,
-}: LocaleLayoutProps) {
+// The shell (text column, pixel board, flower) lives in the layout, so it stays mounted
+// while stories open and close in the middle column; the board can then re-assemble instead of reloading.
+export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const { locale } = await params;
 
   if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
@@ -25,5 +25,9 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
-  return <NextIntlClientProvider>{children}</NextIntlClientProvider>;
+  return (
+    <NextIntlClientProvider>
+      <SiteShell>{children}</SiteShell>
+    </NextIntlClientProvider>
+  );
 }

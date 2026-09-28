@@ -1,0 +1,123 @@
+/* The whole page is one pixel board (a fixed canvas). Text sits on the quiet part of it;
+   the flower grows in .panel; a project's story opens in the middle column. */
+
+.site {
+  --text: #23262a;
+  --muted: #6c716c;
+  --line: rgba(35, 38, 42, 0.28);
+  --focus: #9c3b2e;
+  position: relative;
+  height: 100dvh;
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: minmax(290px, 26%) 0 1fr;
+  padding: 44px 0 40px 48px;
+  color: var(--text);
+  font: 400 16px/1.55 var(--font-onest), system-ui, -apple-system, "Segoe UI", sans-serif;
+  pointer-events: none;
+}
+:global(:root[data-mode="dark"]) .site {
+  --text: #ece5de;
+  --muted: #8e8780;
+  --line: rgba(236, 229, 222, 0.3);
+  --focus: #e09a35;
+}
+.site[data-open] { grid-template-columns: minmax(290px, 26%) minmax(300px, 24%) 1fr; }
+
+.board {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.side, .story, .panel { position: relative; z-index: 1; grid-row: 1; }
+.side { grid-column: 1; }
+.story { grid-column: 2; }
+.panel { grid-column: 3; pointer-events: none; }
+
+.side a, .side button, .story a { color: var(--text); }
+.side :focus-visible, .story :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 2px; }
+
+/* ---------- left column ---------- */
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 330px;
+  pointer-events: auto;
+}
+.name { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+.name img { width: 22px; height: 22px; image-rendering: pixelated; border-radius: 4px; }
+.lead { margin: 0; max-width: 28ch; }
+
+.work { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.project { display: inline-block; text-decoration: none; }
+.project small { display: block; color: var(--muted); font-size: 14px; }
+.projectTitle { position: relative; }
+.project:hover .projectTitle { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
+.project[aria-current] .projectTitle::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  background: var(--focus);
+}
+
+.more { display: flex; gap: 22px; }
+.more a, .links a { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
+.more a[aria-current] { text-decoration-color: var(--focus); }
+
+.foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.links { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.prefs { display: grid; justify-items: end; gap: 4px; color: var(--muted); font-size: 14px; }
+.mode { font: inherit; color: var(--muted) !important; background: none; border: 0; padding: 0; cursor: pointer; }
+.mode:hover { color: var(--text) !important; }
+:global(:root[data-mode="dark"]) .toDark,
+:global(:root:not([data-mode="dark"])) .toLight { display: none; }
+.lang { display: flex; gap: 6px; }
+.lang a { color: var(--muted); text-decoration: none; }
+.lang a[aria-current] { color: var(--text); }
+
+/* ---------- middle column: a story ---------- */
+.story { min-height: 0; overflow: auto; padding: 0 28px 0 8px; pointer-events: auto; }
+.story[data-empty] { overflow: hidden; padding: 0; }
+.article { display: grid; align-content: start; gap: 16px; max-width: 40ch; }
+.articleHead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.articleHead h1 { margin: 0; font-size: 18px; font-weight: 500; }
+.articleHead h1:focus { outline: none; }
+.close { font-size: 14px; color: var(--muted) !important; text-decoration: none; }
+.close:hover { color: var(--text) !important; }
+.meta { margin: -10px 0 0; color: var(--muted); font-size: 14px; }
+.article p { margin: 0; }
+.article a { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.list small { display: block; color: var(--muted); font-size: 14px; }
+
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- phones: the board on top, text below ---------- */
+@media (max-width: 760px) {
+  .site, .site[data-open] {
+    grid-template-columns: 1fr;
+    grid-template-rows: 58vh auto auto;
+    height: auto;
+    min-height: 100dvh;
+    padding: 0 20px 28px;
+  }
+  .side, .story, .panel { grid-column: 1; }
+  .panel { grid-row: 1; }
+  .side { grid-row: 2; max-width: none; padding-top: 24px; min-height: calc(42vh - 28px); }
+  .story { grid-row: 3; padding: 28px 0 0; overflow: visible; }
+  .story[data-empty] { display: none; }
+  .article { max-width: none; }
+}
