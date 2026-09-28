@@ -111,6 +111,13 @@
 
 .story { min-height: 0; overflow: auto; padding: 0 28px 0 8px; pointer-events: auto; }
 .story[data-empty] { overflow: hidden; padding: 0; }
+.story::-webkit-scrollbar { width: 6px; }
+.story::-webkit-scrollbar-track { background: transparent; }
+.story::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.story::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+@supports not selector(::-webkit-scrollbar) {
+  .story { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+}
 .article { display: grid; align-content: start; gap: 16px; max-width: 40ch; }
 .articleHead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .articleHead h1 { margin: 0; font-family: var(--display); font-size: calc(18px * var(--dk)); font-weight: 500; }
