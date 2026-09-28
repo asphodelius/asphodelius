@@ -95,7 +95,7 @@
   box-shadow: inset -1px -1px 0 rgba(0, 0, 0, 0.25);
 }
 
-.more { display: flex; gap: 22px; font-family: var(--display); font-size: calc(16px * var(--dk)); }
+.more { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--display); font-size: calc(16px * var(--dk)); }
 
 .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
 .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -123,6 +123,14 @@
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .list a { font-family: var(--display); font-size: calc(16px * var(--dk)); }
 .list small { display: block; color: var(--muted); font-size: calc(var(--fs) - 2px); }
+
+.block { display: grid; gap: 10px; }
+.block h2 { margin: 0; font-family: var(--display); font-size: calc(14px * var(--dk)); font-weight: 500; }
+.facts { margin: 0; display: grid; gap: 8px; }
+.facts dt { color: var(--muted); font-size: calc(var(--fs) - 2px); }
+.facts dd { margin: 0; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.timeline small { display: block; color: var(--muted); font-size: calc(var(--fs) - 2px); }
 
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 

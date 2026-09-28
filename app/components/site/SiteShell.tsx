@@ -19,6 +19,7 @@ const serverMode = (): Mode => "dark";
 
 function openStory(pathname: string): string | null {
   if (pathname === "/projects") return "projects";
+  if (pathname === "/about") return "about";
   const match = pathname.match(/^\/work\/([^/]+)/);
   return match ? match[1] : null;
 }
@@ -103,6 +104,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <nav className={styles.more} aria-label={t("navLabel")}>
           <Link href={open === "projects" ? "/" : "/projects"} scroll={false} data-story="projects" data-stitch="" aria-current={open === "projects" ? "page" : undefined}>
             {t("projectsLink")}
+          </Link>
+          <Link href={open === "about" ? "/" : "/about"} scroll={false} data-story="about" data-stitch="" aria-current={open === "about" ? "page" : undefined}>
+            {t("aboutLink")}
           </Link>
           <NextLink href="/resume" data-stitch="">{t("resume")}</NextLink>
         </nav>

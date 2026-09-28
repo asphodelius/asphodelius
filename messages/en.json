@@ -3,6 +3,7 @@
     "lead": "Frontend developer. I build interfaces with React, Next.js and TypeScript.",
     "navLabel": "Sections",
     "projectsLink": "Projects",
+    "aboutLink": "About",
     "resume": "Resume",
     "close": "Close",
     "themeLight": "Light linen",
@@ -25,7 +26,46 @@
     "meta": {
       "title": "asphodelius — frontend developer",
       "description": "Frontend developer. I build interfaces with React, Next.js and TypeScript.",
-      "projectsTitle": "Projects — asphodelius"
+      "projectsTitle": "Projects — asphodelius",
+      "aboutTitle": "About — asphodelius"
+    },
+    "about": {
+      "title": "About",
+      "profile": "Frontend developer from Saint Petersburg. I build responsive interfaces with React and TypeScript, work with component architecture and SSR, write readable code and take part in code review.",
+      "stackTitle": "Stack",
+      "stack": {
+        "core": {
+          "label": "Core",
+          "items": "JavaScript (ES6+), TypeScript, React, Next.js"
+        },
+        "ui": {
+          "label": "Interfaces",
+          "items": "HTML5, CSS3, Tailwind CSS, Material UI, responsive design"
+        },
+        "state": {
+          "label": "State",
+          "items": "Redux Toolkit, React Router, Context API"
+        },
+        "tools": {
+          "label": "Tools",
+          "items": "REST API, Axios, Git, GitHub, Vite"
+        }
+      },
+      "experienceTitle": "Experience",
+      "experience": {
+        "goodPeople": {
+          "period": "2026 · Good People",
+          "text": "Commissioned project: a real estate agency website in Next.js, React, TypeScript and Tailwind CSS, with SSR, SEO structure and contact forms over a REST API."
+        },
+        "aston": {
+          "period": "June — September 2024 · Aston",
+          "text": "Project work: UI components in React and TypeScript, responsive layouts, bug fixes, code review."
+        }
+      },
+      "educationTitle": "Education",
+      "education": "Peter the Great St. Petersburg Polytechnic University, computer science and engineering, bachelor, since 2025. Before the transfer — NSTU, 2023.",
+      "languagesTitle": "Languages",
+      "languages": "Russian — native, English — Upper Intermediate."
     }
   }
 }
