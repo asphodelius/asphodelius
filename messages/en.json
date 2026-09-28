@@ -8,21 +8,22 @@
       "titleLine2": "that",
       "bloomWord": "bloom",
       "titleLine3": "from code.",
-      "body": "",
+      "body": "I’m asphodelius. I design interfaces and bring them to life in code, from the visual idea to frontend development.",
       "scrollCue": "Selected work",
       "code": [
         "const seed = compose(\"logic\", \"atmosphere\");",
         "const stem = grow(seed, interaction);",
         "render(<Bloom />);"
-      ]
+      ],
+      "contact": "Get in touch"
     },
     "intro": {
-      "label": "Intro",
-      "statement": "I build digital products where engineering precision becomes visual atmosphere.",
-      "supporting": "This project is built as a simple, cohesive system with the focus kept on structure, rhythm, and the work itself. The visual motif supports the content instead of competing with it.",
+      "label": "About",
+      "statement": "Design and code are part of the same work.",
+      "supporting": "My interface work brings visual design and frontend development together. I care about how a page is structured, what people notice first, and how it feels to use.",
       "stackLabel": "Stack",
       "stackHeading": "Frontend systems, interaction tooling, and product delivery technologies I use in practice.",
-      "stackHint": "Hover any technology to wake a leaf on the flower."
+      "stackHint": "The tools I work with."
     },
     "work": {
       "label": "Selected Work",
@@ -31,8 +32,11 @@
           "title": "Good People",
           "category": "Real estate agency website in Novosibirsk",
           "summary": "A real estate website built around trust, legal safety, and personal client guidance.",
-          "meta": "Strategy / UI design / Frontend build / 2026",
-          "href": "https://good-people.pro"
+          "meta": "Frontend development · 2026",
+          "href": "https://good-people.pro",
+          "image": "/projects/good-people.webp",
+          "imageAlt": "Good People homepage: the agency team and its property buying and selling services.",
+          "credit": "Design — Viktoria Sudorgina. Development — asphodelius."
         },
         {
           "title": "Growing Seed",
@@ -46,19 +50,21 @@
           "summary": "The next bloom is in progress. Exploring new interaction ideas.",
           "meta": "Design research / Code experiments / In progress"
         }
-      ]
+      ],
+      "visit": "Visit website",
+      "inProgress": "In progress"
     },
     "philosophy": {
       "label": "Philosophy",
       "quote": "Every interface should feel authored, not assembled.",
       "highlightWord": "authored",
       "metallicWord": "assembled",
-      "supporting": "Minimalism is precision in the details. Hierarchy, rhythm, and typography create a calm interface.",
+      "supporting": "Content and structure come first. Then typography, details, and motion that supports the interaction.",
       "butterflyLabel": "Send the butterfly into flight"
     },
     "contact": {
       "label": "Contact",
-      "heading": "Available for projects in product design, creative direction, and frontend development.",
+      "heading": "Let’s talk about your project.",
       "links": [
         {
           "label": "Email",
@@ -73,9 +79,10 @@
         {
           "label": "Telegram",
           "value": "t.me/stereoling",
-          "href": "https://t.me/stereoling#"
+          "href": "https://t.me/stereoling"
         }
-      ]
+      ],
+      "body": "Available for interface design and frontend development. Tell me what you’re looking to build."
     },
     "cursor": {
       "open": "open",
@@ -87,6 +94,20 @@
     "easterEgg": {
       "progress": "Click {remaining} more {remaining, plural, one {time} other {times}} to wake the butterfly garden.",
       "unlocked": "The butterfly garden is awake."
+    },
+    "navigation": {
+      "label": "Navigation",
+      "work": "Work",
+      "about": "About",
+      "contact": "Contact",
+      "language": "Site language",
+      "skip": "Skip to content",
+      "top": "Back to top"
+    },
+    "flowerCaption": "Asphodelus · growth through interaction",
+    "meta": {
+      "title": "asphodelius — interface design & frontend",
+      "description": "I’m asphodelius. I design interfaces and bring them to life in code, from the visual idea to frontend development."
     }
   }
 }

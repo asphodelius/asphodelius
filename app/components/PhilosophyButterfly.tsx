@@ -3,10 +3,10 @@
 import {
   motion,
   type HTMLMotionProps,
-  useAnimationFrame,
   useMotionValue,
+  useReducedMotion,
 } from "framer-motion";
-import { forwardRef, memo, useRef } from "react";
+import { forwardRef, memo, useEffect, useRef, type ReactNode } from "react";
 
 type PhilosophyButterflyProps = {
   ariaLabel: string;
@@ -20,6 +20,7 @@ type PhilosophyButterflyProps = {
   onMouseLeave?: () => void;
   onTrigger?: () => void;
   showGraphic?: boolean;
+  children?: ReactNode;
 };
 
 type PhilosophyButterflyGraphicProps = HTMLMotionProps<"span"> & {
@@ -29,125 +30,61 @@ type PhilosophyButterflyGraphicProps = HTMLMotionProps<"span"> & {
 export const PhilosophyButterflyGraphic = memo(function PhilosophyButterflyGraphic({
   className,
   isFlying = false,
+  style,
   ...props
 }: PhilosophyButterflyGraphicProps) {
-  const phase = useRef(Math.PI * 0.61803398875);
+  const reducedMotion = useReducedMotion();
+  const phase = useRef(0);
+  const elapsed = useRef(0);
+  const flightBlend = useRef(0);
   const shellX = useMotionValue(0);
   const shellY = useMotionValue(0);
   const shellRotate = useMotionValue(0);
-  const shellScale = useMotionValue(1);
-  const leftWingRotate = useMotionValue(0);
-  const leftWingScaleX = useMotionValue(1);
-  const leftWingScaleY = useMotionValue(1);
-  const rightWingRotate = useMotionValue(0);
-  const rightWingScaleX = useMotionValue(1);
-  const rightWingScaleY = useMotionValue(1);
-  const torsoRotate = useMotionValue(0);
-  const torsoY = useMotionValue(0);
+  const wingScaleX = useMotionValue(1);
 
-  useAnimationFrame((time) => {
-    const t = time / 1000;
-    const basePhase = phase.current;
-  
-    const flapRate = isFlying ? 4.3 : 2.25;
-    const normalizedPhase = basePhase / (Math.PI * 2);
-    const cycle = (t * flapRate + normalizedPhase) % 1;
-    const closePhaseRaw =
-      cycle < 0.38 ? cycle / 0.38 : 1 - (cycle - 0.38) / 0.62;
-    const closePhase = Math.max(closePhaseRaw, 0);
-    const closeStrength = Math.pow(closePhase, isFlying ? 1.32 : 1.18);
-    const wingOpenAngle = isFlying ? 21.5 : 16.5;
-    const wingClosedAngle = isFlying ? -6.2 : -2.8;
-    const recoveryFlutter =
-      Math.sin(t * flapRate * Math.PI * 2 + basePhase * 0.42) *
-      (1 - closeStrength) *
-      (isFlying ? 0.95 : 0.42);
-    const wingAngle =
-      wingOpenAngle +
-      (wingClosedAngle - wingOpenAngle) * closeStrength +
-      recoveryFlutter;
-    const wingScaleYValue = 1 - closeStrength * (isFlying ? 0.15 : 0.09);
-    const wingScaleXValue = 1 + closeStrength * (isFlying ? 0.014 : 0.008);
-    const flapLift = closeStrength * (isFlying ? 0.9 : 0.42);
-
-    leftWingRotate.set(wingAngle);
-    leftWingScaleX.set(wingScaleXValue);
-    leftWingScaleY.set(wingScaleYValue);
-    rightWingRotate.set(-wingAngle * 0.97);
-    rightWingScaleX.set(wingScaleXValue);
-    rightWingScaleY.set(wingScaleYValue);
-
-    if (isFlying) {
-      shellX.set(
-        (Math.sin(t * 5.4 + basePhase) * 1.35 +
-          Math.sin(t * 9.2 + basePhase * 0.6) * 0.42),
-      );
-      shellY.set(
-        (Math.sin(t * 4.9 + basePhase * 0.8) * -1.05 +
-          Math.sin(t * 8.6 + basePhase * 1.2) * 0.22 -
-          flapLift),
-      );
-      shellRotate.set(
-        (Math.sin(t * 3.8 + basePhase * 0.75) * 2.1 +
-          Math.cos(t * 6.6 + basePhase) * 0.8),
-      );
-      shellScale.set(
-        1 +
-          (Math.sin(t * 5.3 + basePhase * 0.4) * 0.012 +
-            Math.cos(t * 2.8 + basePhase) * 0.006),
-      );
-      torsoRotate.set(
-        (Math.sin(t * 5.2 + basePhase * 0.5) * 1.5 +
-          Math.cos(t * 3.4 + basePhase) * 0.45),
-      );
-      torsoY.set(
-        (Math.sin(t * 5.4 + basePhase * 0.9) * -0.34 +
-          Math.cos(t * 3.4 + basePhase * 0.55) * 0.12 -
-          flapLift * 0.2),
-      );
+  useEffect(() => {
+    if (reducedMotion || !isFlying) {
+      shellX.set(0);
+      shellY.set(0);
+      shellRotate.set(0);
+      wingScaleX.set(1);
       return;
     }
-
-    shellX.set(
-      (Math.sin(t * 1.15 + basePhase) * 2.8 +
-        Math.sin(t * 0.58 + basePhase * 0.8) * 1.2),
-    );
-    shellY.set(
-      (Math.sin(t * 0.96 + basePhase * 0.65) * -2.6 +
-        Math.cos(t * 0.48 + basePhase * 1.1) * -0.95 -
-        flapLift),
-    );
-    shellRotate.set(
-      (-
-        4.4 +
-        Math.sin(t * 1.26 + basePhase * 0.85) * 2.1 +
-        Math.cos(t * 0.74 + basePhase * 0.4) * 0.62),
-    );
-    shellScale.set(
-      1 +
-        (Math.sin(t * 1.05 + basePhase * 0.4) * 0.012 +
-          Math.cos(t * 0.64 + basePhase) * 0.006),
-    );
-    torsoRotate.set(
-      (Math.sin(t * 1.52 + basePhase * 0.45) * 0.8 +
-        Math.cos(t * 0.92 + basePhase * 0.75) * 0.24),
-    );
-    torsoY.set(
-      (Math.sin(t * 1.42 + basePhase * 0.95) * -0.22 +
-        Math.cos(t * 0.88 + basePhase * 0.35) * 0.08 -
-        flapLift * 0.12),
-    );
-  });
+    let frame = 0;
+    let previousTime = performance.now();
+    const animate = (time: number) => {
+    const delta = time - previousTime;
+    previousTime = time;
+    // Integrate the phase: changing speed must never restart a wingbeat.
+    const dt = Math.min(delta, 40) / 1000;
+    flightBlend.current += ((isFlying ? 1 : 0) - flightBlend.current) *
+      (1 - Math.exp(-dt * 7));
+    const flying = flightBlend.current;
+    elapsed.current += dt;
+    phase.current = (phase.current + dt * (1.25 + flying * 3) * Math.PI * 2) %
+      (Math.PI * 2);
+    const t = elapsed.current;
+    const fold = (1 - Math.cos(phase.current)) / 2;
+    // Both wings fold toward the torso, with no detached or skewed joints.
+    wingScaleX.set(1 - fold * (0.2 + flying * 0.48));
+    shellX.set(Math.sin(t * 1.1) * (1.1 - flying * 0.8));
+    shellY.set(Math.sin(t * 1.6) * (1.4 - flying) - fold * flying * 0.45);
+    shellRotate.set(Math.sin(t * 1.3) * (1.8 - flying));
+    frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [isFlying, reducedMotion, shellRotate, shellX, shellY, wingScaleX]);
 
   return (
     <motion.span
       className={className}
       {...props}
       style={{
+        ...style,
         x: shellX,
         y: shellY,
         rotate: shellRotate,
-        scale: shellScale,
         transformOrigin: "50% 52%",
         willChange: "transform",
       }}
@@ -161,11 +98,9 @@ export const PhilosophyButterflyGraphic = memo(function PhilosophyButterflyGraph
       >
         <motion.g
           style={{
-            rotate: leftWingRotate,
-            scaleX: leftWingScaleX,
-            scaleY: leftWingScaleY,
+            scaleX: wingScaleX,
             transformBox: "view-box",
-            transformOrigin: "39px 28px",
+            transformOrigin: "40px 30px",
             willChange: "transform",
           }}
         >
@@ -233,11 +168,9 @@ export const PhilosophyButterflyGraphic = memo(function PhilosophyButterflyGraph
 
         <motion.g
           style={{
-            rotate: rightWingRotate,
-            scaleX: rightWingScaleX,
-            scaleY: rightWingScaleY,
+            scaleX: wingScaleX,
             transformBox: "view-box",
-            transformOrigin: "41px 28px",
+            transformOrigin: "40px 30px",
             willChange: "transform",
           }}
         >
@@ -305,8 +238,6 @@ export const PhilosophyButterflyGraphic = memo(function PhilosophyButterflyGraph
 
         <motion.g
           style={{
-            rotate: torsoRotate,
-            y: torsoY,
             transformBox: "view-box",
             transformOrigin: "40px 18px",
             willChange: "transform",
@@ -379,6 +310,7 @@ const PhilosophyButterfly = memo(
         onMouseLeave,
         onTrigger,
         showGraphic = true,
+        children,
       },
       ref,
     ) {
@@ -408,12 +340,12 @@ const PhilosophyButterfly = memo(
             }
           />
 
-          {showGraphic ? (
+          {children ?? (showGraphic ? (
             <PhilosophyButterflyGraphic
               className={motionClassName}
               isFlying={isFlying}
             />
-          ) : null}
+          ) : null)}
         </button>
       );
     },
