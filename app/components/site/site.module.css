@@ -24,6 +24,14 @@
 }
 .site[data-open] { grid-template-columns: minmax(290px, 26%) minmax(300px, 24%) 1fr; }
 
+/* text follows the board's theme wave: a soft cross-fade instead of a hard cut */
+:global(:root[data-switching]) .site :where(p, a, small, span, h1, button, li) {
+  transition: color 0.5s ease 0.3s, text-decoration-color 0.5s ease 0.3s, background-color 0.5s ease 0.3s;
+}
+@media (prefers-reduced-motion: reduce) {
+  :global(:root[data-switching]) .site :where(p, a, small, span, h1, button, li) { transition: none; }
+}
+
 .board {
   position: fixed;
   inset: 0;

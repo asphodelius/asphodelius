@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react";
 import NextLink from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -36,10 +36,17 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const open = openStory(pathname);
   const [hovered, setHovered] = useState<string | null>(null);
   const mode = useSyncExternalStore(subscribeMode, readMode, serverMode);
+  const modeOriginRef = useRef<{ x: number; y: number } | null>(null);
 
-  function toggleMode() {
+  function toggleMode(e: MouseEvent<HTMLButtonElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    modeOriginRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     const next: BoardMode = mode === "dark" ? "light" : "dark";
-    document.documentElement.dataset.mode = next;
+    const root = document.documentElement;
+    // colours cross-fade only while the theme is switching, so ordinary hovers stay instant
+    root.dataset.switching = "";
+    window.setTimeout(() => { delete root.dataset.switching; }, 1400);
+    root.dataset.mode = next;
     try { localStorage.setItem("mode", next); } catch { /* private mode: the choice lasts for this visit */ }
   }
 
@@ -62,7 +69,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.site} data-open={open ? "" : undefined}>
-      <Board panelRef={panelRef} mode={mode} highlight={highlight} />
+      <Board panelRef={panelRef} mode={mode} highlight={highlight} modeOriginRef={modeOriginRef} />
 
       <aside className={styles.side} ref={sideRef}>
         <p className={styles.name} translate="no">

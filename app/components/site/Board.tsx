@@ -8,9 +8,11 @@ type BoardProps = {
   panelRef: RefObject<HTMLDivElement | null>;
   mode: BoardMode;
   highlight: boolean;
+  /** Where the last theme switch came from, so the wave starts at the button. */
+  modeOriginRef?: RefObject<{ x: number; y: number } | null>;
 };
 
-export function Board({ panelRef, mode, highlight }: BoardProps) {
+export function Board({ panelRef, mode, highlight, modeOriginRef }: BoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boardRef = useRef<BoardApi | null>(null);
   const modeRef = useRef(mode);
@@ -23,7 +25,11 @@ export function Board({ panelRef, mode, highlight }: BoardProps) {
     return () => { board.destroy(); boardRef.current = null; };
   }, [panelRef]);
 
-  useEffect(() => { modeRef.current = mode; boardRef.current?.setMode(mode); }, [mode]);
+  useEffect(() => {
+    modeRef.current = mode;
+    boardRef.current?.setMode(mode, modeOriginRef?.current);
+    if (modeOriginRef) modeOriginRef.current = null;
+  }, [mode, modeOriginRef]);
   useEffect(() => { boardRef.current?.setHighlight(highlight); }, [highlight]);
 
   return <canvas ref={canvasRef} className={styles.board} aria-hidden="true" />;

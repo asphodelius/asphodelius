@@ -14,6 +14,7 @@ type Geometry = { S: number; stem: [number, number][]; flowers: Flower[]; leaves
 type Petal = { x: number; y: number; vx: number; vy: number; age: number; life: number };
 type Firefly = { x: number; y: number; vx: number; vy: number; ph: number; orb: number; spd: number; a: number; leave: boolean };
 type Transition = { g0: Geometry; b0: Box; t0: number; hits0: Int8Array | null; dir: number };
+type ModeWave = { from: BoardMode; t0: number; ox: number; oy: number; reach: number };
 
 const PALETTES = {
   dark: {
@@ -39,6 +40,7 @@ const LEAVES: [number, number, number][] = [[-1, 0.62, 0.34], [1, 0.55, 0.3], [-
 const REST_BLOOM = 0.42;
 const FRAME_INTERVAL = 1 / 40; // a board does not need more than ~40 fps
 const TRANSITION = 1.1;
+const MODE_WAVE = 1.3; // seconds for the theme wave to cross the board
 
 const hex = (h: string): RGB => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -51,7 +53,8 @@ function segDist(px: number, py: number, ax: number, ay: number, bx: number, by:
 }
 
 export type Board = {
-  setMode: (mode: BoardMode) => void;
+  /** Switch theme; with an origin, the new theme spreads from that point as a wave of pixels. */
+  setMode: (mode: BoardMode, origin?: { x: number; y: number } | null) => void;
   setHighlight: (on: boolean) => void;
   relayout: () => void;
   destroy: () => void;
@@ -66,6 +69,8 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
   let mix = 0, mixT = 0;                  // 0 natural palette, 1 highlighted project
   let bloom = REST_BLOOM, bloomT = REST_BLOOM;
   const col = {} as Record<ColourKey, RGB>;
+  const colOld = {} as Record<ColourKey, RGB>;
+  let wave: ModeWave | null = null;
 
   let W = 0, H = 0, cell = 14, cols = 0, rows = 0;
   let box: Box = { x: 0, y: 0, w: 0, h: 0 };
@@ -84,9 +89,17 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
   const flies: Firefly[] = [];
   let flySpawn = 0;
 
-  function palette() {
-    const a = PALETTES[mode].base, b = PALETTES[mode].highlight;
-    for (const k of KEYS) { const x = hex(a[k]), y = hex(b[k]); col[k] = [0, 1, 2].map(i => x[i] + (y[i] - x[i]) * mix) as RGB; }
+  function fillPalette(target: Record<ColourKey, RGB>, m: BoardMode) {
+    const a = PALETTES[m].base, b = PALETTES[m].highlight;
+    for (const k of KEYS) { const x = hex(a[k]), y = hex(b[k]); target[k] = [0, 1, 2].map(i => x[i] + (y[i] - x[i]) * mix) as RGB; }
+  }
+  function palette() { fillPalette(col, mode); if (wave) fillPalette(colOld, wave.from); }
+
+  // the colour of one cell under a given palette: the shimmering ground, or the part of the plant covering it
+  function cellColour(C: Record<ColourKey, RGB>, h: number, c: number, r: number, n: number): RGB {
+    if (h >= 0) { const tw = 1 + (hash(c, r) - 0.5) * 0.08 + 0.04 * Math.sin(t * 1.3 + c * 0.7 + r * 0.3), p = C[HIT[h]]; return [p[0] * tw, p[1] * tw, p[2] * tw]; }
+    const g1 = C.ground, g2 = C.ground2;
+    return [g1[0] + (g2[0] - g1[0]) * n, g1[1] + (g2[1] - g1[1]) * n, g1[2] + (g2[2] - g1[2]) * n];
   }
 
   function readBox(): Box { const r = panel.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; }
@@ -218,7 +231,6 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
     palette();
     const g = scene(), light = mode === "light"; lastG = g;
     step(reduced ? 0 : el, g);
-    const ground = col.ground, ground2 = col.ground2;
     const bx = box, inBox = (x: number, y: number) => x >= bx.x && x <= bx.x + bx.w && y >= bx.y && y <= bx.y + bx.h;
 
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
@@ -228,6 +240,9 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
 
     // during a transition every cell keeps the old picture until its own moment, then flips:
     // a sweep in the direction of travel with a little randomness
+    const wv = wave, tw = wv ? (now - wv.t0) / 1000 : 0;
+    if (wv && tw > MODE_WAVE + 0.3) wave = null;
+
     let tp = 0, x0 = 0, span = 1;
     const tr = trans;
     if (tr) {
@@ -255,10 +270,13 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
       }
       // the quiet shimmer of the board
       const n = clamp(0.5 + 0.5 * Math.sin(c * 0.23 + t * 0.35) * Math.sin(r * 0.19 - t * 0.28) + 0.25 * Math.sin((c + r) * 0.09 + t * 0.5), 0, 1);
-      let rgb: RGB = [ground[0] + (ground2[0] - ground[0]) * n, ground[1] + (ground2[1] - ground[1]) * n, ground[2] + (ground2[2] - ground[2]) * n];
-      if (h >= 0) {
-        const tw = 1 + (hash(c, r) - 0.5) * 0.08 + 0.04 * Math.sin(t * 1.3 + c * 0.7 + r * 0.3), p = col[HIT[h]];
-        rgb = [p[0] * tw, p[1] * tw, p[2] * tw];
+      let rgb = cellColour(col, h, c, r, n);
+      // theme wave: cells keep the old theme until the front reaches them; the front itself glows
+      if (wv) {
+        const d = Math.hypot((c + 0.5) * cell - wv.ox, (r + 0.5) * cell - wv.oy) / wv.reach;
+        const sw = (d * 0.85 + hash(c * 1.3, r * 2.1) * 0.15) * MODE_WAVE;
+        if (tw < sw) rgb = cellColour(colOld, h, c, r, n);
+        else if (tw < sw + 0.16) rgb = tint(rgb, col.anther, (1 - (tw - sw) / 0.16) * (light ? 0.5 : 0.65));
       }
       if (flip > 0) rgb = tint(rgb, light ? col.vein : col.petal, flip * (light ? 0.35 : 0.55));
       const packed = (clamp(rgb[0] | 0, 0, 255) << 16) | (clamp(rgb[1] | 0, 0, 255) << 8) | clamp(rgb[2] | 0, 0, 255);
@@ -332,7 +350,15 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
   start();
 
   return {
-    setMode(m) { mode = m; painted.fill(-1); },
+    setMode(m, origin) {
+      if (m === mode) return;
+      if (!reduced && lastG) {
+        const ox = origin?.x ?? W / 2, oy = origin?.y ?? H / 2;
+        const reach = Math.max(Math.hypot(ox, oy), Math.hypot(W - ox, oy), Math.hypot(ox, H - oy), Math.hypot(W - ox, H - oy));
+        wave = { from: mode, t0: performance.now(), ox, oy, reach };
+      }
+      mode = m; painted.fill(-1);
+    },
     setHighlight(on) { mixT = on ? 1 : 0; bloomT = on ? 1 : REST_BLOOM; },
     relayout,
     destroy() {
