@@ -35,7 +35,7 @@ export default async function WorkPage({ params }: PageProps) {
       <p>{t("about")}</p>
       <p>{t("work")}</p>
       <p>{t("credit")}</p>
-      <p><a href={project.href} target="_blank" rel="noopener noreferrer">{project.host}</a></p>
+      <p><a href={project.href} target="_blank" rel="noopener noreferrer" data-stitch="">{project.host}</a></p>
     </Story>
   );
 }

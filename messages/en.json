@@ -5,8 +5,9 @@
     "projectsLink": "Projects",
     "resume": "Resume",
     "close": "Close",
-    "themeLight": "Light theme",
-    "themeDark": "Dark theme",
+    "themeLight": "Light linen",
+    "themeDark": "Dark linen",
+    "unpick": "Unpick threads",
     "languageLabel": "Site language",
     "projects": {
       "goodPeople": {

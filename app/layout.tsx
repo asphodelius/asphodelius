@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Inter, Onest } from "next/font/google";
+import { IBM_Plex_Mono, Inter, JetBrains_Mono, Unbounded } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import { headers } from "next/headers";
 import "./globals.css";
 
-// Onest is the site's face; Inter and IBM Plex Mono are kept for the /resume page.
-const onest = Onest({ subsets: ["latin", "cyrillic"], weight: ["400", "500"], variable: "--font-onest" });
+const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], weight: ["400", "500"], variable: "--font-unbounded" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], weight: ["400", "500"], variable: "--font-jetbrains" });
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter" });
 const ibmPlexMono = IBM_Plex_Mono({ subsets: ["latin", "cyrillic"], weight: ["400", "500"], variable: "--font-mono" });
 
@@ -17,19 +17,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#141614" },
-    { media: "(prefers-color-scheme: light)", color: "#e4e8e1" },
+    { media: "(prefers-color-scheme: dark)", color: "#1d1d1f" },
+    { media: "(prefers-color-scheme: light)", color: "#ebeae6" },
   ],
 };
 
-// Chooses the theme before the first paint: a saved choice, otherwise the system setting.
 const themeScript = `(function(){try{var m=localStorage.getItem("mode");if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.mode=m}catch(e){document.documentElement.dataset.mode="dark"}})()`;
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const requestHeaders = await headers();
   const locale = requestHeaders.get("x-site-locale") ?? (await getLocale());
   return (
-    <html lang={locale} className={`${onest.variable} ${inter.variable} ${ibmPlexMono.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${unbounded.variable} ${jetbrains.variable} ${inter.variable} ${ibmPlexMono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

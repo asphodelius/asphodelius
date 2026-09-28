@@ -1,36 +1,39 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
-import { createBoard, type Board as BoardApi, type BoardMode } from "./board-engine";
+import { createEmbroidery, type Embroidery } from "./embroidery/engine";
+import type { Mode } from "./embroidery/threads";
 import styles from "./site.module.css";
+
+const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ? "light" : "dark");
 
 type BoardProps = {
   panelRef: RefObject<HTMLDivElement | null>;
-  mode: BoardMode;
+  rootRef: RefObject<HTMLDivElement | null>;
+  mode: Mode;
   highlight: boolean;
-  /** Where the last theme switch came from, so the wave starts at the button. */
-  modeOriginRef?: RefObject<{ x: number; y: number } | null>;
+  unpickRef: RefObject<(() => void) | null>;
+  onStitches: (count: number) => void;
 };
 
-export function Board({ panelRef, mode, highlight, modeOriginRef }: BoardProps) {
+export function Board({ panelRef, rootRef, mode, highlight, unpickRef, onStitches }: BoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const boardRef = useRef<BoardApi | null>(null);
-  const modeRef = useRef(mode);
+  const apiRef = useRef<Embroidery | null>(null);
+  const stitchesRef = useRef(onStitches);
+
+  useEffect(() => { stitchesRef.current = onStitches; }, [onStitches]);
 
   useEffect(() => {
-    const canvas = canvasRef.current, panel = panelRef.current;
-    if (!canvas || !panel) return;
-    const board = createBoard(canvas, panel, modeRef.current);
-    boardRef.current = board;
-    return () => { board.destroy(); boardRef.current = null; };
-  }, [panelRef]);
+    const canvas = canvasRef.current, panel = panelRef.current, root = rootRef.current;
+    if (!canvas || !panel || !root) return;
+    const api = createEmbroidery(canvas, { panel, root, mode: domMode(), onStitches: n => stitchesRef.current(n) });
+    apiRef.current = api;
+    unpickRef.current = api.unpick;
+    return () => { api.destroy(); apiRef.current = null; unpickRef.current = null; };
+  }, [panelRef, rootRef, unpickRef]);
 
-  useEffect(() => {
-    modeRef.current = mode;
-    boardRef.current?.setMode(mode, modeOriginRef?.current);
-    if (modeOriginRef) modeOriginRef.current = null;
-  }, [mode, modeOriginRef]);
-  useEffect(() => { boardRef.current?.setHighlight(highlight); }, [highlight]);
+  useEffect(() => { if (mode === domMode()) apiRef.current?.setMode(mode); }, [mode]);
+  useEffect(() => { apiRef.current?.setHighlight(highlight); }, [highlight]);
 
   return <canvas ref={canvasRef} className={styles.board} aria-hidden="true" />;
 }

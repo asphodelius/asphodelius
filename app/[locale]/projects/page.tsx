@@ -27,7 +27,7 @@ export default async function ProjectsPage({ params }: PageProps) {
       <ul className={styles.list}>
         {projects.map((project) => (
           <li key={project.slug}>
-            <Link href={`/work/${project.slug}`} scroll={false}>{t(`projects.${project.key}.title`)}</Link>
+            <Link href={`/work/${project.slug}`} scroll={false} data-stitch="hover">{t(`projects.${project.key}.title`)}</Link>
             <small>{t(`projects.${project.key}.short`)}</small>
           </li>
         ))}

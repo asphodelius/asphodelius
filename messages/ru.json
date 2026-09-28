@@ -5,8 +5,9 @@
     "projectsLink": "Проекты",
     "resume": "Резюме",
     "close": "Закрыть",
-    "themeLight": "Светлая тема",
-    "themeDark": "Тёмная тема",
+    "themeLight": "Светлый лён",
+    "themeDark": "Тёмный лён",
+    "unpick": "Распустить нитки",
     "languageLabel": "Язык сайта",
     "projects": {
       "goodPeople": {
