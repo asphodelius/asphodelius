@@ -45,7 +45,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     // colours cross-fade only while the theme is switching, so ordinary hovers stay instant
     root.dataset.switching = "";
-    window.setTimeout(() => { delete root.dataset.switching; }, 1400);
+    window.setTimeout(() => { delete root.dataset.switching; }, 900);
     root.dataset.mode = next;
     try { localStorage.setItem("mode", next); } catch { /* private mode: the choice lasts for this visit */ }
   }

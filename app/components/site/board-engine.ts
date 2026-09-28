@@ -40,7 +40,7 @@ const LEAVES: [number, number, number][] = [[-1, 0.62, 0.34], [1, 0.55, 0.3], [-
 const REST_BLOOM = 0.42;
 const FRAME_INTERVAL = 1 / 40; // a board does not need more than ~40 fps
 const TRANSITION = 1.1;
-const MODE_WAVE = 1.3; // seconds for the theme wave to cross the board
+const MODE_WAVE = 0.7; // seconds for the theme wave to cross the board
 
 const hex = (h: string): RGB => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -276,7 +276,7 @@ export function createBoard(canvas: HTMLCanvasElement, panel: HTMLElement, initi
         const d = Math.hypot((c + 0.5) * cell - wv.ox, (r + 0.5) * cell - wv.oy) / wv.reach;
         const sw = (d * 0.85 + hash(c * 1.3, r * 2.1) * 0.15) * MODE_WAVE;
         if (tw < sw) rgb = cellColour(colOld, h, c, r, n);
-        else if (tw < sw + 0.16) rgb = tint(rgb, col.anther, (1 - (tw - sw) / 0.16) * (light ? 0.5 : 0.65));
+        else if (tw < sw + 0.1) rgb = tint(rgb, col.anther, (1 - (tw - sw) / 0.1) * (light ? 0.5 : 0.65));
       }
       if (flip > 0) rgb = tint(rgb, light ? col.vein : col.petal, flip * (light ? 0.35 : 0.55));
       const packed = (clamp(rgb[0] | 0, 0, 255) << 16) | (clamp(rgb[1] | 0, 0, 255) << 8) | clamp(rgb[2] | 0, 0, 255);
