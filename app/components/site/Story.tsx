@@ -16,7 +16,7 @@ export function Story({ title, meta, children }: { title: string; meta?: string;
     <article className={styles.article} aria-labelledby="story-title">
       <header className={styles.articleHead}>
         <h1 id="story-title" ref={headingRef} tabIndex={-1}>{title}</h1>
-        <Link href="/" scroll={false} className={styles.close}>{t("close")}</Link>
+        <Link href="/" scroll={false} className={styles.close} data-stitch="">{t("close")}</Link>
       </header>
       {meta ? <p className={styles.meta}>{meta}</p> : null}
       {children}

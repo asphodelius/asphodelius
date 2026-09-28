@@ -3,7 +3,6 @@
     "lead": "Frontend-разработчик. Пишу интерфейсы на React, Next.js и TypeScript.",
     "navLabel": "Разделы",
     "projectsLink": "Проекты",
-    "aboutLink": "Обо мне",
     "resume": "Резюме",
     "close": "Закрыть",
     "themeLight": "Светлый лён",
@@ -26,46 +25,7 @@
     "meta": {
       "title": "asphodelius — frontend-разработчик",
       "description": "Frontend-разработчик. Пишу интерфейсы на React, Next.js и TypeScript.",
-      "projectsTitle": "Проекты — asphodelius",
-      "aboutTitle": "Обо мне — asphodelius"
-    },
-    "about": {
-      "title": "Обо мне",
-      "profile": "Frontend-разработчик из Санкт-Петербурга. Делаю адаптивные интерфейсы на React и TypeScript, работаю с компонентной архитектурой и SSR, пишу читаемый код и участвую в код-ревью.",
-      "stackTitle": "Стек",
-      "stack": {
-        "core": {
-          "label": "Основной",
-          "items": "JavaScript (ES6+), TypeScript, React, Next.js"
-        },
-        "ui": {
-          "label": "Интерфейсы",
-          "items": "HTML5, CSS3, Tailwind CSS, Material UI, адаптивная вёрстка"
-        },
-        "state": {
-          "label": "Состояние",
-          "items": "Redux Toolkit, React Router, Context API"
-        },
-        "tools": {
-          "label": "Инструменты",
-          "items": "REST API, Axios, Git, GitHub, Vite"
-        }
-      },
-      "experienceTitle": "Опыт",
-      "experience": {
-        "goodPeople": {
-          "period": "2026 · Хорошие люди",
-          "text": "Заказной проект: сайт агентства недвижимости на Next.js, React, TypeScript и Tailwind CSS, с SSR, SEO-структурой и формами обратной связи через REST API."
-        },
-        "aston": {
-          "period": "Июнь — сентябрь 2024 · Aston",
-          "text": "Проектная работа: UI-компоненты на React и TypeScript, адаптивная вёрстка, исправление багов, код-ревью."
-        }
-      },
-      "educationTitle": "Образование",
-      "education": "СПбПУ (Политех), информатика и вычислительная техника, бакалавриат, с 2025 года. До перевода — НГТУ, 2023.",
-      "languagesTitle": "Языки",
-      "languages": "Русский — родной, English — Upper Intermediate."
+      "projectsTitle": "Проекты — asphodelius"
     }
   }
 }

@@ -572,7 +572,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       const tgt = el.querySelector("[data-stitch-text]") ?? el;
       if (!tgt.getClientRects().length) continue;
       const rg = document.createRange(); rg.selectNodeContents(tgt);
-      for (const q of rg.getClientRects()) if (q.width > 2) lines.push({ el, x0: q.left, x1: q.right, y: q.bottom + oy + 3, t: q.top + oy });
+      const clip = el.closest("main")?.getBoundingClientRect();
+      for (const q of rg.getClientRects()) if (q.width > 2 && !(clip && (q.bottom + 4 < clip.top || q.top > clip.bottom))) lines.push({ el, x0: q.left, x1: q.right, y: q.bottom + oy + 3, t: q.top + oy });
     }
     kick();
   }
