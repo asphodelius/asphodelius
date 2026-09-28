@@ -3,7 +3,7 @@ import { buildFrame, framePad } from "./frame";
 import { context, makeCanvas, prepare, prepareSteps, Renderer, type Box } from "./render";
 import { runSliced } from "./slice";
 import type { Flower, Head, Stitch } from "./stitcher";
-import { clamp, LINEN, LX, LY, rgbStr, rng, threadColour, type Mode, type Pt, type Rgb } from "./threads";
+import { clamp, lerp, LINEN, LX, LY, rgbStr, rng, threadColour, type Mode, type Pt, type Rgb } from "./threads";
 import { ICONS, type IconStitch } from "./icons";
 
 export type EmbroideryOptions = {
@@ -29,7 +29,7 @@ type Line = { el: Element; x0: number; x1: number; y: number; t: number };
 type Rect = { left: number; top: number; width: number; height: number };
 type Hover = { on: boolean; t: number };
 
-const SEW_TIME = 6, DUR = 0.16, RN = 22, MIN_GAP = 12;
+const SEW_TIME = 6, DUR = 0.16, RN = 22, MIN_GAP = 12, GLIDE = 620, LEAN = 0.075;
 const THREAD_COL = ["rs2", "bl1", "lg2", "ys1", "pk2", "pl2", "orn"];
 const BF_WING = [["bl0", "bl1", "bl2", "bl3", "pray"], ["pl1", "pl2", "pl3", "pl3", "pray"]];
 
@@ -54,6 +54,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   let snapshot: HTMLCanvasElement | null = null, snapT = 0, holdSnap = false;
   let recomposeAt = 0, job: ((deadline: number) => boolean) | null = null;
   let raf = 0, lastDraw = 0, lowPower = false, destroyed = false;
+  let tween: { from: Box; to: Box; t0: number; dir: number } | null = null, tilt = 0;
 
   const X = (u: number) => R.X(u), Y = (v: number) => R.Y(v);
   const inPx = <T,>(fn: () => T) => R.withBox({ x: 0, y: 0, s: 1 }, fn);
@@ -83,7 +84,19 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     const b = c && cacheBox.get(c);
     if (!c || !b) return;
     const k = R.box.s / b.s;
+    if (!tilt) { ctx.drawImage(c, R.box.x - b.x * k, R.box.y - b.y * k, b.W * k, b.H * k); return; }
+    const cx = R.box.x + R.box.s / 2, cy = R.box.y + R.box.s / 2;
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(tilt); ctx.translate(-cx, -cy);
     ctx.drawImage(c, R.box.x - b.x * k, R.box.y - b.y * k, b.W * k, b.H * k);
+    ctx.restore();
+  }
+
+  function finishTween() {
+    if (!tween) return;
+    R.box = { ...tween.to };
+    tween = null; tilt = 0;
+    recomposeAt = performance.now();
   }
   function paintBg() {
     bg = makeCache();
@@ -158,15 +171,26 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   }
 
   function layout() {
+    const from: Box | null = ready && !reduced && !sewing && !rethreading && !holdSnap && !snapshot && !job && full ? { ...R.box } : null;
+    const w0 = W, h0 = H, d0 = DPR;
     metrics();
     if (frameKey !== `${W}x${H}` || !R.hasAtlas(mode)) rebuildFrame();
     linen = makeLinen(); paintBg();
     const hurry = holdSnap;
     if (holdSnap) { holdSnap = false; snapT = performance.now(); }
     job = null;
-    if (hurry) composeFrame();
-    if (sewing || !full || hurry) rebuild();
-    else recomposeAt = performance.now() + 250;
+    const to: Box = { ...R.box };
+    const glide = !!from && w0 === W && h0 === H && d0 === DPR && (from.x !== to.x || from.y !== to.y || from.s !== to.s);
+    if (glide && from) {
+      tween = { from, to, t0: performance.now(), dir: to.x < from.x ? -1 : 1 };
+      recomposeAt = 0;
+      if (!R.hasAtlas(mode)) runSliced(R.atlasSteps(mode), 8, () => destroyed, () => {});
+    } else {
+      tween = null; tilt = 0;
+      if (hurry) composeFrame();
+      if (sewing || !full || hurry) rebuild();
+      else recomposeAt = performance.now() + 250;
+    }
     if (rethreading) runs.forEach(paintRun);
     measure();
     kick();
@@ -189,6 +213,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   }
 
   function rethread(on: boolean) {
+    finishTween();
     uiDirty = true;
     gp = on;
     if (sewing) {
@@ -243,6 +268,13 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   function draw(now: number) {
     const t = now / 1000;
     let busy = false;
+    if (tween) {
+      const k = clamp((now - tween.t0) / GLIDE, 0, 1), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      const { from, to } = tween;
+      R.box = { x: lerp(from.x, to.x, e), y: lerp(from.y, to.y, e), s: lerp(from.s, to.s, e) };
+      tilt = tween.dir * LEAN * Math.sin(Math.PI * k);
+      if (k >= 1) { R.box = { ...to }; tween = null; tilt = 0; recomposeAt = now; } else busy = true;
+    }
     if (settle) { settle = false; snap(); if (snapshot) { holdSnap = true; startJob(); } else rebuild(); idleAtlas(); }
     if (recomposeAt && !rethreading && !snapshot && !sewing && now >= recomposeAt) { recomposeAt = 0; startJob(); }
     if (job && !rethreading) {
@@ -711,7 +743,13 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     }, 100);
   };
   let relayoutFrame = 0;
-  const schedule = () => { cancelAnimationFrame(relayoutFrame); relayoutFrame = requestAnimationFrame(() => { snap(); layout(); }); };
+  const schedule = () => {
+    cancelAnimationFrame(relayoutFrame);
+    relayoutFrame = requestAnimationFrame(() => {
+      if (canvas.clientWidth !== W || canvas.clientHeight !== H) snap();
+      layout();
+    });
+  };
   const panelObserver = new ResizeObserver(() => { if (ready) schedule(); });
   const domObserver = new MutationObserver(() => measure());
   const onFonts = () => measure();
@@ -771,6 +809,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       if (m === mode) return;
       if (!ready) { mode = m; R.mode = m; return; }
       snap();
+      finishTween();
       mode = m; R.mode = m;
       linen = makeLinen();
       recolour();
