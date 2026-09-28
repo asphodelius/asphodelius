@@ -43,7 +43,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     const next: Mode = mode === "dark" ? "light" : "dark";
     const root = document.documentElement;
     root.dataset.switching = "";
-    window.setTimeout(() => { delete root.dataset.switching; }, 900);
+    window.setTimeout(() => { delete root.dataset.switching; }, 4000);
     root.dataset.mode = next;
     try { localStorage.setItem("mode", next); } catch {}
   }

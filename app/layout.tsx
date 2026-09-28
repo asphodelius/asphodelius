@@ -23,7 +23,7 @@ export const viewport: Viewport = {
   ],
 };
 
-const themeScript = `(function(){try{var m=localStorage.getItem("mode");if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.mode=m}catch(e){document.documentElement.dataset.mode="dark"}})()`;
+const themeScript = `(function(){try{var m=localStorage.getItem("mode");if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.mode=m;document.documentElement.dataset.ink=m}catch(e){document.documentElement.dataset.mode="dark";document.documentElement.dataset.ink="dark"}})()`;
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const requestHeaders = await headers();

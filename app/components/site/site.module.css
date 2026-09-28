@@ -17,7 +17,7 @@
   font: 400 var(--fs)/1.55 var(--font-jetbrains), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   pointer-events: none;
 }
-:global(:root[data-mode="dark"]) .site {
+:global(:root[data-ink="dark"]) .site {
   --text: #ece8e2;
   --muted: #94908a;
   --line: rgba(236, 232, 226, 0.3);
@@ -26,7 +26,7 @@
 .site[data-open] { grid-template-columns: minmax(290px, 26%) minmax(300px, 24%) 1fr; }
 
 :global(:root[data-switching]) .site :where(p, a, small, span, h1, button, li) {
-  transition: color 0.35s ease 0.15s, background-color 0.35s ease 0.15s;
+  transition: color 0.07s linear 0.26s, background-color 0.07s linear 0.26s;
 }
 @media (prefers-reduced-motion: reduce) {
   :global(:root[data-switching]) .site :where(p, a, small, span, h1, button, li) { transition: none; }

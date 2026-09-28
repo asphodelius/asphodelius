@@ -11,6 +11,7 @@ export type EmbroideryOptions = {
   root: HTMLElement;
   mode: Mode;
   onStitches?: (count: number) => void;
+  onSwap?: (mode: Mode) => void;
 };
 
 export type Embroidery = {
@@ -177,7 +178,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (frameKey !== `${W}x${H}` || !R.hasAtlas(mode)) rebuildFrame();
     linen = makeLinen(); paintBg();
     const hurry = holdSnap;
-    if (holdSnap) { holdSnap = false; snapT = performance.now(); }
+    if (holdSnap) release();
     job = null;
     const to: Box = { ...R.box };
     const glide = !!from && w0 === W && h0 === H && d0 === DPR && (from.x !== to.x || from.y !== to.y || from.s !== to.s);
@@ -222,7 +223,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     }
     const now = performance.now() / 1000;
     if (job) {
-      if (holdSnap) { job(Infinity); holdSnap = false; snapT = performance.now(); }
+      if (holdSnap) { job(Infinity); release(); }
       else recomposeAt = performance.now();
       job = null;
     }
@@ -252,6 +253,11 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (snapshot) { holdSnap = true; startJob(true); } else { composeFrame(); rebuild(); }
   }
 
+  function release() {
+    holdSnap = false; snapT = performance.now();
+    opts.onSwap?.(mode);
+  }
+
   function snap() {
     if (reduced) return;
     snapshot = makeCanvas(canvas.width, canvas.height);
@@ -278,7 +284,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (settle) { settle = false; snap(); if (snapshot) { holdSnap = true; startJob(); } else rebuild(); idleAtlas(); }
     if (recomposeAt && !rethreading && !snapshot && !sewing && now >= recomposeAt) { recomposeAt = 0; startJob(); }
     if (job && !rethreading) {
-      if (job(performance.now() + (holdSnap ? 12 : 6))) { job = null; if (holdSnap) { holdSnap = false; snapT = now; } }
+      if (job(performance.now() + (holdSnap ? 12 : 6))) { job = null; if (holdSnap) release(); }
       busy = true;
     }
     const doc = () => R.setBase(ctx, DPR, 0, -sy() * DPR), screen = () => R.setBase(ctx, DPR, 0, 0);
@@ -807,12 +813,13 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   return {
     setMode(m) {
       if (m === mode) return;
-      if (!ready) { mode = m; R.mode = m; return; }
+      if (!ready) { mode = m; R.mode = m; opts.onSwap?.(m); return; }
       snap();
       finishTween();
       mode = m; R.mode = m;
       linen = makeLinen();
       recolour();
+      if (!snapshot) opts.onSwap?.(mode);
       kick();
     },
     setHighlight(on) { if (on === gp) return; if (ready) rethread(on); else gp = on; },
