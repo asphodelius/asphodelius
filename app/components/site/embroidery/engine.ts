@@ -52,7 +52,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   let bg = makeCanvas(1, 1), frameC: HTMLCanvasElement | null = null, low: HTMLCanvasElement | null = null, full: HTMLCanvasElement | null = null;
   const cacheBox = new WeakMap<HTMLCanvasElement, CacheBox>();
   let gp = false, sewing = false, pending = 0, settle = false, rethreading = false;
-  let snapshot: HTMLCanvasElement | null = null, snapT = 0, holdSnap = false;
+  let snapshot: HTMLCanvasElement | null = null, snapBuf: HTMLCanvasElement | null = null, snapT = 0, holdSnap = false;
   let recomposeAt = 0, job: ((deadline: number) => boolean) | null = null;
   let raf = 0, lastDraw = 0, lowPower = false, destroyed = false;
   let tween: { from: Box; to: Box; t0: number; dir: number } | null = null, tilt = 0;
@@ -61,7 +61,10 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   const inPx = <T,>(fn: () => T) => R.withBox({ x: 0, y: 0, s: 1 }, fn);
   const threadPx = () => Math.max(2.6, 0.0062 * R.box.s * 0.78);
 
+  const linens: Partial<Record<Mode, CanvasPattern | null>> = {};
   function makeLinen() {
+    const known = linens[mode];
+    if (known) return known;
     const L = LINEN[mode], n = 160, t = makeCanvas(n, n), x = context(t), img = x.createImageData(n, n), d = img.data, r = rng(7);
     const rowV = Array.from({ length: n }, () => (r() - 0.5) * L.variance), colV = Array.from({ length: n }, () => (r() - 0.5) * L.variance);
     for (let y = 0; y < n; y++) for (let xx = 0; xx < n; xx++) {
@@ -69,11 +72,18 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       d[i] = L.base[0] + v; d[i + 1] = L.base[1] + v; d[i + 2] = L.base[2] + v * 0.9; d[i + 3] = 255;
     }
     x.putImageData(img, 0, 0);
-    return ctx.createPattern(t, "repeat");
+    return (linens[mode] = ctx.createPattern(t, "repeat"));
+  }
+  const pool: HTMLCanvasElement[] = [];
+  function recycle(c: HTMLCanvasElement | null) {
+    if (c && pool.length < 3 && !pool.includes(c)) pool.push(c);
   }
   function makeCache() {
-    const c = makeCanvas(canvas.width, canvas.height);
-    R.setBase(context(c), DPR, 0, 0);
+    const at = pool.findIndex(p => p.width === canvas.width && p.height === canvas.height);
+    const c = at >= 0 ? pool.splice(at, 1)[0] : makeCanvas(canvas.width, canvas.height);
+    const g = context(c);
+    if (at >= 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); }
+    R.setBase(g, DPR, 0, 0);
     cacheBox.set(c, { ...R.box, W, H });
     return c;
   }
@@ -99,10 +109,15 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     tween = null; tilt = 0;
     recomposeAt = performance.now();
   }
+  let bgKey = "";
   function paintBg() {
-    bg = makeCache();
+    const key = `${canvas.width}x${canvas.height}|${mode}`;
+    if (key === bgKey) return;
+    if (bg.width !== canvas.width || bg.height !== canvas.height) bg = makeCanvas(canvas.width, canvas.height);
     const g = context(bg);
+    R.setBase(g, DPR, 0, 0);
     if (linen) { g.fillStyle = linen; g.fillRect(0, 0, W, H); }
+    bgKey = key;
   }
 
   function composeFrame() {
@@ -146,7 +161,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       fstep = R.withBox({ x: 0, y: 0, s: FS }, () => R.composer(target, F, s => colour(s.key)));
     }
     job = deadline => {
-      if (fstep) { if (!fstep(deadline)) return false; fstep = null; frameC = fr; }
+      if (fstep) { if (!fstep(deadline)) return false; fstep = null; recycle(frameC); frameC = fr; }
       if (!phase) {
         if (!step(deadline)) return false;
         phase = 1; nf = makeCache();
@@ -155,6 +170,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
         step = R.composer(nf, ASP, s => s.c0);
       }
       if (!step(deadline)) return false;
+      recycle(low); recycle(full);
       low = nl; full = nf;
       return true;
     };
@@ -163,7 +179,9 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   function metrics() {
     scrollPos = scrollY;
     DPR = Math.min(2, devicePixelRatio || 1); W = canvas.clientWidth || innerWidth; H = canvas.clientHeight || innerHeight;
-    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+    const cw = Math.round(W * DPR), ch = Math.round(H * DPR);
+    if (canvas.width !== cw) canvas.width = cw;
+    if (canvas.height !== ch) canvas.height = ch;
     R.setBase(ctx, DPR, 0, 0);
     root.style.setProperty("--pad", framePad(W) + "px");
     const r = panel.getBoundingClientRect(), s = Math.min(r.width, r.height) * 0.97;
@@ -260,14 +278,31 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
 
   function snap() {
     if (reduced) return;
-    snapshot = makeCanvas(canvas.width, canvas.height);
-    context(snapshot).drawImage(canvas, 0, 0);
+    if (!snapBuf || snapBuf.width !== canvas.width || snapBuf.height !== canvas.height) snapBuf = makeCanvas(canvas.width, canvas.height);
+    context(snapBuf).drawImage(canvas, 0, 0);
+    snapshot = snapBuf;
     snapT = performance.now();
+  }
+
+  let wanted: Mode = mode, building = false;
+  function applyMode(m: Mode) {
+    snap();
+    finishTween();
+    mode = m; R.mode = m;
+    linen = makeLinen();
+    recolour();
+    if (!snapshot) opts.onSwap?.(mode);
+    kick();
   }
 
   function idleAtlas() {
     const other: Mode = mode === "dark" ? "light" : "dark";
-    const run = () => { if (!destroyed && !R.hasAtlas(other)) runSliced(R.atlasSteps(other), 6, () => destroyed, () => {}); };
+    const run = () => {
+      if (destroyed) return;
+      if (!snapBuf) snapBuf = makeCanvas(canvas.width, canvas.height);
+      while (pool.length < 2) pool.push(makeCanvas(canvas.width, canvas.height));
+      if (!R.hasAtlas(other)) runSliced(R.atlasSteps(other), 6, () => destroyed, () => {});
+    };
     if ("requestIdleCallback" in window) window.requestIdleCallback(run); else setTimeout(run, 200);
   }
 
@@ -812,15 +847,20 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
 
   return {
     setMode(m) {
+      wanted = m;
       if (m === mode) return;
       if (!ready) { mode = m; R.mode = m; opts.onSwap?.(m); return; }
-      snap();
-      finishTween();
-      mode = m; R.mode = m;
-      linen = makeLinen();
-      recolour();
-      if (!snapshot) opts.onSwap?.(mode);
-      kick();
+      if (!reduced && !R.hasAtlas(m)) {
+        if (!building) {
+          building = true;
+          runSliced(R.atlasSteps(m), 8, () => destroyed, () => {
+            building = false;
+            if (!destroyed && wanted !== mode) applyMode(wanted);
+          });
+        }
+        return;
+      }
+      applyMode(m);
     },
     setHighlight(on) { if (on === gp) return; if (ready) rethread(on); else gp = on; },
     unpick() { if (sewn.length) { unpicking = performance.now(); kick(); } },

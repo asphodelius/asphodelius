@@ -86,8 +86,8 @@ export class Renderer {
 
   resize(threadPx: number) {
     const sh = clamp(Math.round(threadPx * 1.35), 8, 22);
-    if (sh !== this.spriteSize) { this.spriteSize = sh; this.fields.clear(); this.atlases = {}; this.epoch++; }
-    this.scratch.clear();
+    if (sh > this.spriteSize) { this.spriteSize = sh; this.fields.clear(); this.atlases = {}; this.epoch++; }
+    if (this.scratch.size > 2) this.scratch.clear();
   }
   resetAtlases() { this.atlases = {}; this.epoch++; }
   hasAtlas(m: Mode) { return !!this.atlases[m]; }
