@@ -9,7 +9,7 @@ const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ?
 
 function reveal() {
   const root = document.documentElement;
-  window.setTimeout(() => { root.dataset.ready = ""; }, Math.max(0, 900 - performance.now()));
+  window.setTimeout(() => { root.dataset.ready = ""; }, Math.max(60, 500 - performance.now()));
 }
 
 function swapInk(mode: Mode) {

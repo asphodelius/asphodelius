@@ -5,11 +5,7 @@ import { routing } from "./i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 export default function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname === "/resume") {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-site-locale", "ru");
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  }
+  if (request.nextUrl.pathname === "/resume") return NextResponse.next();
 
   return intlMiddleware(request);
 }

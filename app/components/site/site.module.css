@@ -158,7 +158,7 @@
   place-items: center;
   background: var(--loader-bg);
   pointer-events: auto;
-  animation: loaderGiveUp 0.5s ease 14s forwards;
+  animation: loaderGiveUp 0.5s ease 8s forwards;
 }
 :global(:root[data-ink="dark"]) .loader { --loader-bg: #1d1d1f; }
 :global(:root[data-ready]) .loader {
@@ -168,21 +168,20 @@
   transition: opacity 0.8s ease, visibility 0s linear 0.8s;
 }
 .loaderSvg { display: block; overflow: visible; animation: loaderCycle 2.4s ease-in-out infinite; }
-.thread { fill: none; stroke: var(--focus); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 10 8; }
-.cover { fill: var(--loader-bg); animation: loaderCover 2.4s linear infinite; }
-.needle { animation: loaderTravel 2.4s linear infinite; }
-.dip { animation: loaderDip 0.6s ease-in-out infinite; }
-.dip line { stroke: var(--text); stroke-width: 2.4; stroke-linecap: round; }
-.dip circle { fill: var(--loader-bg); stroke: var(--text); stroke-width: 1; }
+.thread { fill: none; stroke: var(--focus); stroke-width: 2.6; stroke-dasharray: 12 12; }
+.travel { animation: loaderTravel 2.4s linear infinite; }
+.cover { fill: var(--loader-bg); }
+.dip { animation: loaderDip 0.4s linear infinite; }
+.needleBody { fill: var(--text); }
+.eye { fill: var(--loader-bg); }
+.tail { fill: none; stroke: var(--focus); stroke-width: 1.2; stroke-linecap: round; }
 
-@keyframes loaderCover { from { transform: translateX(0); } to { transform: translateX(200px); } }
-@keyframes loaderTravel { from { transform: translateX(0); } to { transform: translateX(196px); } }
-@keyframes loaderDip { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
-@keyframes loaderCycle { 0% { opacity: 0; } 12% { opacity: 1; } 84% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes loaderTravel { from { transform: translateX(20px); } to { transform: translateX(164px); } }
+@keyframes loaderDip { 0%, 48% { transform: translateY(0); } 62%, 86% { transform: translateY(5px); } 100% { transform: translateY(0); } }
+@keyframes loaderCycle { 0% { opacity: 0; } 8% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes loaderGiveUp { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .loaderSvg, .cover, .needle, .dip { animation: none; }
-  .cover { display: none; }
-  .needle { transform: translateX(196px); }
+  .loaderSvg, .travel, .dip { animation: none; }
+  .travel { transform: translateX(164px); }
 }

@@ -216,14 +216,6 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     kick();
   }
 
-  function raise() {
-    S.forEach(s => { s.c0 = colour(s.key, gp && s.asph); s.c1 = null; });
-    sewing = false; pending = 0; sewLo = 0; recomposeAt = 0;
-    startJob();
-    idleAtlas();
-    kick();
-  }
-
   function paintRun(f: Run) {
     const pad = 10, x0 = Math.floor(X(f.c[0] - f.r * 1.3) - pad), y0 = Math.floor(Y(f.c[1] - f.r * 1.3) - pad), sz = Math.ceil(f.r * 2.6 * R.box.s + pad * 2);
     f.sprite.width = f.sprite.height = Math.ceil(sz * DPR);
@@ -285,7 +277,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     snapT = performance.now();
   }
 
-  let wanted: Mode = mode, building = false, booting = true;
+  let wanted: Mode = mode, building = false;
   function applyMode(m: Mode) {
     snap();
     finishTween();
@@ -320,10 +312,9 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (settle) { settle = false; snap(); if (snapshot) { holdSnap = true; startJob(); } else rebuild(); idleAtlas(); }
     if (recomposeAt && !rethreading && !snapshot && !sewing && now >= recomposeAt) { recomposeAt = 0; startJob(); }
     if (job && !rethreading) {
-      if (job(performance.now() + (holdSnap ? 12 : booting ? 14 : 6))) { job = null; if (holdSnap) release(); }
+      if (job(performance.now() + (holdSnap ? 12 : 6))) { job = null; if (holdSnap) release(); }
       busy = true;
     }
-    if (booting && !job && full && !recomposeAt) { booting = false; opts.onReady?.(); }
     const doc = () => R.setBase(ctx, DPR, 0, -sy() * DPR), screen = () => R.setBase(ctx, DPR, 0, 0);
     screen();
     ctx.drawImage(bg, 0, 0, W, H);
@@ -840,9 +831,23 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     }
     yield;
     if (mode !== startMode) { R.resetAtlases(); R.atlas(mode); composeFrame(); }
+    for (const s of S) { s.c0 = colour(s.key, gp && s.asph); s.c1 = null; }
+    linen = makeLinen(); paintBg();
+    for (let tries = 0; tries < 3; tries++) {
+      const box = { ...R.box };
+      startJob();
+      const step = job;
+      while (step && !step(performance.now() + 12)) yield;
+      job = null;
+      metrics();
+      if (box.x === R.box.x && box.y === R.box.y && box.s === R.box.s) break;
+      yield;
+    }
     ready = true;
-    layout();
-    raise();
+    if (frameKey !== `${W}x${H}`) layout(); else { linen = makeLinen(); paintBg(); measure(); }
+    kick();
+    opts.onReady?.();
+    window.setTimeout(idleAtlas, 1500);
   }
 
   runSliced(boot(), 9, () => destroyed, () => {});

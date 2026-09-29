@@ -66,13 +66,21 @@ export function SiteShell({ children }: { children: ReactNode }) {
   return (
     <div className={styles.site} data-open={open ? "" : undefined} ref={rootRef}>
       <div className={styles.loader} aria-hidden="true">
-        <svg className={styles.loaderSvg} viewBox="0 0 240 44" width="240" height="44">
-          <path className={styles.thread} d="M22 30 H218" />
-          <rect className={styles.cover} x="12" y="12" width="216" height="32" />
-          <g className={styles.needle}>
-            <g className={styles.dip}>
-              <line x1="4" y1="34" x2="26" y2="20" />
-              <circle cx="6" cy="33" r="1.7" />
+        <svg className={styles.loaderSvg} viewBox="0 0 200 48" width="240" height="58">
+          <defs>
+            <clipPath id="loader-above">
+              <rect x="-60" y="-10" width="120" height="40.6" />
+            </clipPath>
+          </defs>
+          <path className={styles.thread} d="M20 30 H164" />
+          <g className={styles.travel}>
+            <rect className={styles.cover} x="0" y="24" width="190" height="12" />
+            <g clipPath="url(#loader-above)">
+              <g className={styles.dip}>
+                <path className={styles.tail} d="M-26.7 17.5 c-5 -2.4 -9.5 0.6 -14 -3.6" />
+                <path className={styles.needleBody} d="M0 30 L-29.45 14.82 A1.3 1.3 0 0 0 -30.55 17.18 Z" />
+                <ellipse className={styles.eye} cx="-26.74" cy="17.52" rx="1.9" ry="0.5" transform="rotate(25 -26.74 17.52)" />
+              </g>
             </g>
           </g>
         </svg>
