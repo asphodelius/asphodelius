@@ -269,7 +269,7 @@
   outline-offset: 4px;
 }
 
-@media (min-width: 1200px) and (min-height: 850px) {
+@media screen and (min-width: 1200px) and (min-height: 850px) {
   .page {
     font-size: clamp(19px, 2.15vh, 22px);
   }
@@ -284,7 +284,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   .page {
     font-size: 16px;
   }
@@ -365,7 +365,7 @@
   }
 }
 
-@media (min-width: 761px) and (max-width: 900px) {
+@media screen and (min-width: 761px) and (max-width: 900px) {
   .resume {
     width: 106.383%;
     height: 106.383%;
@@ -374,7 +374,7 @@
   }
 }
 
-@media (max-width: 760px) and (max-height: 780px) {
+@media screen and (max-width: 760px) and (max-height: 780px) {
   .resume {
     width: 132.45%;
     height: 132.45%;
@@ -382,7 +382,7 @@
   }
 }
 
-@media (max-width: 760px) and (max-height: 620px) {
+@media screen and (max-width: 760px) and (max-height: 620px) {
   .resume {
     width: 162.602%;
     height: 162.602%;
@@ -390,7 +390,7 @@
   }
 }
 
-@media (max-height: 720px) {
+@media screen and (max-height: 720px) {
   .resume {
     padding-block: 1.3em;
   }
@@ -402,14 +402,15 @@
 
 @media print {
   @page {
-    size: A4 landscape;
-    margin: 10mm 12mm;
+    size: A4 portrait;
+    margin: 14mm 15mm;
   }
 
+  :global(html),
   :global(html[data-mode]),
   :global(html[data-mode]) :global(body) {
-    color-scheme: light;
-    background: #ffffff;
+    color-scheme: light !important;
+    background: #ffffff !important;
     margin: 0;
   }
 
@@ -418,12 +419,58 @@
     height: auto;
     overflow: visible;
     background: #ffffff;
-    font-size: 10pt;
+    font-size: 11pt;
   }
 
   .resume {
-    min-height: 185mm;
+    display: block;
+    height: auto;
     padding: 0;
+  }
+
+  .header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.2em;
+    padding-bottom: 1.2em;
+  }
+
+  .contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em 1.6em;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .identity h1 {
+    font-size: 2.9em;
+  }
+
+  .content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5em 2.6em;
+    padding-top: 1.5em;
+  }
+
+  .details {
+    display: contents;
+  }
+
+  .experienceSection,
+  .details > section:nth-child(1) {
+    grid-column: 1 / -1;
+  }
+
+  .details > section:nth-child(1) { order: 1; }
+  .experienceSection { order: 2; padding: 0; }
+  .details > section:nth-child(2) { order: 3; grid-column: 1; grid-row: span 2; }
+  .details > section:nth-child(3) { order: 3; grid-column: 2; }
+  .details > section:nth-child(4) { order: 4; grid-column: 2; }
+
+  .skills,
+  .education {
+    grid-template-columns: 1fr;
   }
 
   .experience,
