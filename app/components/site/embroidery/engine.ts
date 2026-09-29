@@ -12,6 +12,7 @@ export type EmbroideryOptions = {
   mode: Mode;
   onStitches?: (count: number) => void;
   onSwap?: (mode: Mode) => void;
+  onReady?: () => void;
 };
 
 export type Embroidery = {
@@ -30,7 +31,7 @@ type Line = { el: Element; x0: number; x1: number; y: number; t: number };
 type Rect = { left: number; top: number; width: number; height: number };
 type Hover = { on: boolean; t: number };
 
-const SEW_TIME = 6, DUR = 0.16, RN = 22, MIN_GAP = 12, GLIDE = 620, LEAN = 0.075;
+const DUR = 0.16, RN = 22, MIN_GAP = 12, GLIDE = 620, LEAN = 0.075;
 const THREAD_COL = ["rs2", "bl1", "lg2", "ys1", "pk2", "pl2", "orn"];
 const BF_WING = [["bl0", "bl1", "bl2", "bl3", "pray"], ["pl1", "pl2", "pl3", "pl3", "pray"]];
 
@@ -215,11 +216,11 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     kick();
   }
 
-  function sewAll() {
-    const now = performance.now() / 1000;
-    S.forEach((s, i) => { s.c0 = null; s.c1 = colour(s.key, gp && s.asph); s.t1 = now + (reduced ? -1 : (i / S.length) * SEW_TIME); });
-    sewing = true; pending = S.length; sewLo = 0; job = null; recomposeAt = 0;
-    low = makeCache(); full = makeCache();
+  function raise() {
+    S.forEach(s => { s.c0 = colour(s.key, gp && s.asph); s.c1 = null; });
+    sewing = false; pending = 0; sewLo = 0; recomposeAt = 0;
+    startJob();
+    idleAtlas();
     kick();
   }
 
@@ -284,7 +285,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     snapT = performance.now();
   }
 
-  let wanted: Mode = mode, building = false;
+  let wanted: Mode = mode, building = false, booting = true;
   function applyMode(m: Mode) {
     snap();
     finishTween();
@@ -319,9 +320,10 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (settle) { settle = false; snap(); if (snapshot) { holdSnap = true; startJob(); } else rebuild(); idleAtlas(); }
     if (recomposeAt && !rethreading && !snapshot && !sewing && now >= recomposeAt) { recomposeAt = 0; startJob(); }
     if (job && !rethreading) {
-      if (job(performance.now() + (holdSnap ? 12 : 6))) { job = null; if (holdSnap) release(); }
+      if (job(performance.now() + (holdSnap ? 12 : booting ? 14 : 6))) { job = null; if (holdSnap) release(); }
       busy = true;
     }
+    if (booting && !job && full && !recomposeAt) { booting = false; opts.onReady?.(); }
     const doc = () => R.setBase(ctx, DPR, 0, -sy() * DPR), screen = () => R.setBase(ctx, DPR, 0, 0);
     screen();
     ctx.drawImage(bg, 0, 0, W, H);
@@ -840,7 +842,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (mode !== startMode) { R.resetAtlases(); R.atlas(mode); composeFrame(); }
     ready = true;
     layout();
-    sewAll();
+    raise();
   }
 
   runSliced(boot(), 9, () => destroyed, () => {});

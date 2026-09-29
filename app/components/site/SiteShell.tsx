@@ -65,6 +65,18 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.site} data-open={open ? "" : undefined} ref={rootRef}>
+      <div className={styles.loader} aria-hidden="true">
+        <svg className={styles.loaderSvg} viewBox="0 0 240 44" width="240" height="44">
+          <path className={styles.thread} d="M22 30 H218" />
+          <rect className={styles.cover} x="12" y="12" width="216" height="32" />
+          <g className={styles.needle}>
+            <g className={styles.dip}>
+              <line x1="4" y1="34" x2="26" y2="20" />
+              <circle cx="6" cy="33" r="1.7" />
+            </g>
+          </g>
+        </svg>
+      </div>
       <Board panelRef={panelRef} rootRef={rootRef} mode={mode} highlight={highlight} unpickRef={unpickRef} onStitches={onStitches} />
 
       <aside className={styles.side} ref={sideRef}>

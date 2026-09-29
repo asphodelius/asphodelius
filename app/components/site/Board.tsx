@@ -7,6 +7,11 @@ import styles from "./site.module.css";
 
 const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ? "light" : "dark");
 
+function reveal() {
+  const root = document.documentElement;
+  window.setTimeout(() => { root.dataset.ready = ""; }, Math.max(0, 900 - performance.now()));
+}
+
 function swapInk(mode: Mode) {
   const root = document.documentElement;
   root.dataset.ink = mode;
@@ -32,7 +37,7 @@ export function Board({ panelRef, rootRef, mode, highlight, unpickRef, onStitche
   useEffect(() => {
     const canvas = canvasRef.current, panel = panelRef.current, root = rootRef.current;
     if (!canvas || !panel || !root) return;
-    const api = createEmbroidery(canvas, { panel, root, mode: domMode(), onStitches: n => stitchesRef.current(n), onSwap: swapInk });
+    const api = createEmbroidery(canvas, { panel, root, mode: domMode(), onStitches: n => stitchesRef.current(n), onSwap: swapInk, onReady: reveal });
     apiRef.current = api;
     unpickRef.current = api.unpick;
     return () => { api.destroy(); apiRef.current = null; unpickRef.current = null; };
