@@ -19,7 +19,7 @@ function sewFromTopLeft(o: IconStitch[], from: number) {
 }
 
 /** Threads in runs of `run` stitches, like variegated floss: the colour drifts along the line instead of alternating. */
-const variegated = (keys: string[], run = 5) => keys.flatMap(k => Array<string>(run).fill(k));
+const variegated = (keys: string[], run = 8) => keys.flatMap(k => Array<string>(run).fill(k));
 
 /** A stem-stitch outline on the edge of a mark, sewn over the fill. */
 function outline(o: IconStitch[], mark: Mark, size: number, keys: string[]) {
@@ -109,21 +109,21 @@ export const ICONS: Record<string, () => IconStitch[]> = {
   mail() {
     const o: IconStitch[] = [];
     o.push(...traceMark(EMAIL, 20.5, 0, ["ys2", "ys3", "ys2", "ys1"]));
-    outline(o, EMAIL, 20.5, ["bl2", "pl3", "pk3", "bl3", "lg3"]);
+    outline(o, EMAIL, 20.5, ["bl1", "bl2", "bl3"]);
     o.push(knot([11.00, 12.45], 1.8, "rs2"));
     return o;
   },
   github() {
     const o: IconStitch[] = [];
     o.push(...traceMark(GITHUB, 20, 0, ["gh1", "gh1", "gh2", "gh0"]));
-    outline(o, GITHUB, 20, ["lg3", "ys2", "orn", "rs3", "pk3"]);
+    outline(o, GITHUB, 20, ["ys1", "ys2", "orn"]);
     return o;
   },
   telegram() {
     const o: IconStitch[] = [];
     o.push(...traceMark(TELEGRAM, 20.5, 0, ["bl1", "bl2", "bl1", "bl3"], 1.35, -0.55));
     triFill(o, [14.07, 9.63], [9.72, 14.42], [11.68, 16.64], "bl3", 1.3, 7);
-    outline(o, TELEGRAM, 20.5, ["ys2", "orn", "pk3", "pl3", "bl3"]);
+    outline(o, TELEGRAM, 20.5, ["pk3", "pk4", "orn"]);
     return o;
   },
 };
