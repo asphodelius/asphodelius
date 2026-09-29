@@ -80,6 +80,7 @@
 
 .work { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .project { display: inline-block; }
+.project[data-icon] { padding-left: 34px; }
 .project small { display: block; color: var(--muted); font-size: calc(var(--fs) - 2px); }
 .projectTitle { position: relative; font-family: var(--display); font-size: calc(16px * var(--dk)); }
 .project[aria-current] .projectTitle::after {
@@ -129,6 +130,7 @@
 .article a:not([data-stitch]) { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .list a { font-family: var(--display); font-size: calc(16px * var(--dk)); }
+.list li:has(> a[data-icon]) { padding-left: 34px; }
 .list small { display: block; color: var(--muted); font-size: calc(var(--fs) - 2px); }
 
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

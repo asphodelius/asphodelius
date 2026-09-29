@@ -12,7 +12,8 @@ export type EmbroideryOptions = {
   mode: Mode;
   onStitches?: (count: number) => void;
   onSwap?: (mode: Mode) => void;
-  onReady?: () => void;
+  sew?: boolean;
+  onReady?: () => number | void;
 };
 
 export type Embroidery = {
@@ -31,7 +32,7 @@ type Line = { el: Element; x0: number; x1: number; y: number; t: number };
 type Rect = { left: number; top: number; width: number; height: number };
 type Hover = { on: boolean; t: number };
 
-const DUR = 0.16, RN = 22, MIN_GAP = 12, GLIDE = 620, LEAN = 0.075;
+const SEW_TIME = 2.4, SEW_DUR = 0.16, DUR = 0.16, RN = 22, MIN_GAP = 12, GLIDE = 620, LEAN = 0.075;
 const THREAD_COL = ["rs2", "bl1", "lg2", "ys1", "pk2", "pl2", "orn"];
 const BF_WING = [["bl0", "bl1", "bl2", "bl3", "pray"], ["pl1", "pl2", "pl3", "pl3", "pray"]];
 
@@ -264,6 +265,24 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (snapshot) { holdSnap = true; startJob(true); } else { composeFrame(); rebuild(); }
   }
 
+  const sewNeedle = { x: 0, y: 0, a: -2.3, on: 0 };
+  function sewAll(delay: number) {
+    const start = performance.now() / 1000 + delay / 1000, n = S.length;
+    S.forEach((s, i) => { s.c0 = null; s.c1 = colour(s.key, gp && s.asph); s.t1 = start + (i / n) * SEW_TIME; });
+    sewing = true; pending = n; sewLo = 0; job = null; recomposeAt = 0; sewNeedle.on = 0;
+    recycle(low); recycle(full);
+    low = makeCache(); full = makeCache();
+    for (const type of ["pointerdown", "keydown", "wheel"]) addEventListener(type, hurrySew, { once: true, passive: true });
+    kick();
+  }
+
+  function hurrySew() {
+    if (!sewing) return;
+    const now = performance.now() / 1000, left = S.length - sewLo;
+    for (let i = sewLo; i < S.length; i++) S[i].t1 = Math.min(S[i].t1, now + ((i - sewLo) / left) * 0.3 - SEW_DUR);
+    kick();
+  }
+
   function release() {
     holdSnap = false; snapT = performance.now();
     opts.onSwap?.(mode);
@@ -338,18 +357,25 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       }
       if (!busy) { rethreading = false; rebuildFull(); }
     } else {
+      let hi = sewLo;
       if (pending && low && full) {
         const gl = context(low), gf = context(full), started = performance.now();
         while (sewLo < S.length) {
           const s = S[sewLo];
-          if (!s.c1 || t < s.t1) break;
+          if (!s.c1 || t < s.t1 + SEW_DUR) break;
           if ((sewLo & 63) === 63 && performance.now() - started > 9) break;
           s.c0 = s.c1; s.c1 = null; pending--; sewLo++;
           if (!s.asph) R.stitch(gl, s, s.c0, 1, "under");
           R.stitch(gf, s, s.c0, 1, "under");
         }
+        hi = sewLo;
+        while (hi < S.length && S[hi].c1 && t >= S[hi].t1) hi++;
       }
       blit(full);
+      if (hi > sewLo) {
+        for (let i = sewLo; i < hi; i++) { const s = S[i]; if (s.c1) R.stitch(ctx, s, s.c1, clamp((t - s.t1) / SEW_DUR, 0, 1)); }
+        pullNeedle(S[hi - 1], clamp((t - S[hi - 1].t1) / SEW_DUR, 0, 1), now);
+      } else sewNeedle.on = 0;
       if (pending) busy = true;
       else if (sewing) { sewing = false; settle = true; busy = true; }
     }
@@ -478,6 +504,32 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     return young || sewnDirty || !!unpicking;
   }
 
+  function paintSteel(tip: Pt, a: number, vis: number, sink: number) {
+    const ux = Math.cos(a), uy = Math.sin(a), nx = -uy, ny = ux, back: Pt = [tip[0] - ux * vis, tip[1] - uy * vis];
+    const eyeP: Pt = [tip[0] - ux * (vis - 4), tip[1] - uy * (vis - 4)];
+    const steel = ctx.createLinearGradient(tip[0] + nx * 2, tip[1] + ny * 2, tip[0] - nx * 2, tip[1] - ny * 2);
+    steel.addColorStop(0, "#F6F7F8"); steel.addColorStop(0.45, "#AEB3B8"); steel.addColorStop(1, "#5E646A");
+    const tl = Math.max(2, 16 - sink);
+    ctx.fillStyle = steel; ctx.beginPath(); ctx.moveTo(tip[0], tip[1]);
+    ctx.lineTo(tip[0] - ux * tl + nx * 1.5, tip[1] - uy * tl + ny * 1.5); ctx.lineTo(back[0] + nx * 1.8, back[1] + ny * 1.8);
+    ctx.arc(back[0], back[1], 1.8, a + Math.PI / 2, a + Math.PI * 1.5);
+    ctx.lineTo(tip[0] - ux * tl - nx * 1.5, tip[1] - uy * tl - ny * 1.5); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(40,44,48,.55)"; ctx.lineWidth = 0.7; ctx.stroke();
+    ctx.fillStyle = "rgba(20,20,20,.75)"; ctx.beginPath(); ctx.ellipse(eyeP[0], eyeP[1], 3.4, 0.7, a, 0, 6.2832); ctx.fill();
+    if (sink > 1) { ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(tip[0], tip[1], 2.6, 1.3, a, 0, 6.2832); ctx.fill(); }
+  }
+
+  function pullNeedle(s: Stitch, k: number, now: number) {
+    const a = s.t === "knot" ? s.p : s.p0, b = s.t === "knot" ? s.p : s.p1, n = sewNeedle;
+    const x = X(lerp(a[0], b[0], k)), y = Y(lerp(a[1], b[1], k));
+    if (!n.on) { n.x = x; n.y = y; n.on = now; }
+    n.x += (x - n.x) * 0.5; n.y += (y - n.y) * 0.5;
+    const pull = Math.sin(Math.PI * k) * 9, a2 = n.a + Math.sin(now / 55) * 0.05, ux = Math.cos(a2), uy = Math.sin(a2), vis = 46 - pull;
+    ctx.lineCap = "round"; ctx.strokeStyle = "rgba(30,22,14,.2)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(n.x + 5, n.y + 9); ctx.lineTo(n.x - ux * vis + 9, n.y - uy * vis + 14); ctx.stroke();
+    paintSteel([n.x, n.y], a2, vis, pull);
+  }
+
   function drawNeedle(now: number) {
     let busy = false;
     if (Math.hypot(ptr.vx, ptr.vy) > 40) {
@@ -487,7 +539,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     ptr.vx *= 0.85; ptr.vy *= 0.85;
     const kd = clamp((now - dip) / 240, 0, 1), sink = Math.sin(Math.PI * kd) * 14;
     if (kd < 1) busy = true;
-    const tip: Pt = [ptr.x, ptr.y + sy()], ux = Math.cos(needleA), uy = Math.sin(needleA), vis = 54 - sink, back: Pt = [tip[0] - ux * vis, tip[1] - uy * vis], nx = -uy, ny = ux;
+    const tip: Pt = [ptr.x, ptr.y + sy()], ux = Math.cos(needleA), uy = Math.sin(needleA), vis = 54 - sink, back: Pt = [tip[0] - ux * vis, tip[1] - uy * vis];
     const eyeP: Pt = [tip[0] - ux * (vis - 4), tip[1] - uy * (vis - 4)];
     if (ropeStep(now, eyeP, holeAt)) busy = true;
     const r = rope;
@@ -498,16 +550,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     }, colour(THREAD_COL[sewCol]), threadPx());
     ctx.lineCap = "round"; ctx.strokeStyle = "rgba(30,22,14,.2)"; ctx.lineWidth = 3.4;
     ctx.beginPath(); ctx.moveTo(tip[0] + 5 - sink * 0.3, tip[1] + 9 - sink * 0.5); ctx.lineTo(back[0] + 9, back[1] + 14); ctx.stroke();
-    const steel = ctx.createLinearGradient(tip[0] + nx * 2, tip[1] + ny * 2, tip[0] - nx * 2, tip[1] - ny * 2);
-    steel.addColorStop(0, "#F6F7F8"); steel.addColorStop(0.45, "#AEB3B8"); steel.addColorStop(1, "#5E646A");
-    const tl = Math.max(2, 16 - sink);
-    ctx.fillStyle = steel; ctx.beginPath(); ctx.moveTo(tip[0], tip[1]);
-    ctx.lineTo(tip[0] - ux * tl + nx * 1.5, tip[1] - uy * tl + ny * 1.5); ctx.lineTo(back[0] + nx * 1.8, back[1] + ny * 1.8);
-    ctx.arc(back[0], back[1], 1.8, needleA + Math.PI / 2, needleA + Math.PI * 1.5);
-    ctx.lineTo(tip[0] - ux * tl - nx * 1.5, tip[1] - uy * tl - ny * 1.5); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = "rgba(40,44,48,.55)"; ctx.lineWidth = 0.7; ctx.stroke();
-    ctx.fillStyle = "rgba(20,20,20,.75)"; ctx.beginPath(); ctx.ellipse(eyeP[0], eyeP[1], 3.4, 0.7, needleA, 0, 6.2832); ctx.fill();
-    if (sink > 1) { ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(tip[0], tip[1], 2.6, 1.3, needleA, 0, 6.2832); ctx.fill(); }
+    paintSteel(tip, needleA, vis, sink);
     return busy;
   }
 
@@ -846,7 +889,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     ready = true;
     if (frameKey !== `${W}x${H}`) layout(); else { linen = makeLinen(); paintBg(); measure(); }
     kick();
-    opts.onReady?.();
+    const delay = opts.onReady?.() ?? 0;
+    if (opts.sew && !reduced && S.length) sewAll(delay + 250);
     window.setTimeout(idleAtlas, 1500);
   }
 

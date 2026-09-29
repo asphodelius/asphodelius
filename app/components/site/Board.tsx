@@ -26,8 +26,18 @@ function hideLoader(fade: boolean) {
 }
 
 function reveal() {
-  if (revealed) { hideLoader(false); return; }
-  window.setTimeout(() => { revealed = true; hideLoader(true); }, Math.max(60, 500 - performance.now()));
+  try { sessionStorage.setItem("sewn", "1"); } catch {}
+  if (revealed) { hideLoader(false); return 0; }
+  const wait = Math.max(60, 500 - performance.now());
+  window.setTimeout(() => { revealed = true; hideLoader(true); }, wait);
+  return wait;
+}
+
+function firstVisit() {
+  try {
+    if (sessionStorage.getItem("sewn")) return false;
+  } catch {}
+  return !revealed;
 }
 
 function restoreRoot() {
@@ -68,7 +78,7 @@ export function Board({ panelRef, rootRef, mode, highlight, unpickRef, onStitche
   useEffect(() => {
     const canvas = canvasRef.current, panel = panelRef.current, root = rootRef.current;
     if (!canvas || !panel || !root) return;
-    const api = createEmbroidery(canvas, { panel, root, mode: domMode(), onStitches: n => stitchesRef.current(n), onSwap: swapInk, onReady: reveal });
+    const api = createEmbroidery(canvas, { panel, root, mode: domMode(), onStitches: n => stitchesRef.current(n), onSwap: swapInk, onReady: reveal, sew: firstVisit() });
     apiRef.current = api;
     unpickRef.current = api.unpick;
     return () => { api.destroy(); apiRef.current = null; unpickRef.current = null; };

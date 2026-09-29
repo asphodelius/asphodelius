@@ -17,6 +17,9 @@ export const THREADS: Record<string, string> = {
   bl0: "#24497F", bl1: "#35649F", bl2: "#5A8CCB", bl3: "#93B9E6",
   ys0: "#B98E24", ys1: "#E0A51E", ys2: "#F3CB42", ys3: "#F8E08A", orn: "#E0711E", tendril: "#7E9A3A",
   wb1: "#BDB8AE", wb2: "#E6E2DA", wb3: "#FBFAF7",
+  bg0: "#B9A48F", bg1: "#EBDDCC", bg2: "#F4EADD", bg3: "#FCF6EE",
+  br0: "#2A1E16", br1: "#37291F", br2: "#54402F",
+  og0: "#A64A08", og1: "#D0660C", og2: "#EE740C", og3: "#FF9233",
   uiA: "#8A6A52", uiB: "#B3261E", disc2: "#5C3E27",
 };
 

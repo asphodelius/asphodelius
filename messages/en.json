@@ -19,6 +19,14 @@
         "about": "A website for the Good People real estate agency, built around trust, the legal safety of every deal and personal support for each client.",
         "work": "I built and launched the site from a finished design with Next.js, React and TypeScript: a responsive layout, reusable Tailwind CSS components, SSR with an SEO-friendly structure, and contact forms over a REST API.",
         "credit": "Design by Viktoria Sudorgina."
+      },
+      "dualAscent": {
+        "title": "Dual Ascent",
+        "short": "Cosmetics store in Telegram, 2026",
+        "meta": "Skincare store as a Telegram Mini App, 2026",
+        "about": "A Korean skincare store inside Telegram. The customer answers a short question about their skin, gets a step-by-step routine and builds a box from it.",
+        "work": "I built both the frontend and the backend with Next.js, React and TypeScript: the quiz, the catalogue, the box builder and checkout. Prices and delivery are calculated on the server, the Telegram Web App signature is verified, orders are stored in Supabase and the admin is notified in Telegram. There is an admin panel with orders, status history and catalogue management.",
+        "credit": "The project is finished and the client is preparing to launch, so the link opens a demo bot."
       }
     },
     "projectsPage": {

@@ -106,6 +106,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   className={styles.project}
                   data-story={project.slug}
                   data-stitch="hover"
+                  data-icon={project.slug}
                   aria-current={isOpen ? "page" : undefined}
                   onPointerEnter={() => setHovered(project.slug)}
                   onPointerLeave={() => setHovered(null)}
