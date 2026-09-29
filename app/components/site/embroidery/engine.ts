@@ -3,7 +3,7 @@ import { buildFrame, framePad } from "./frame";
 import { context, makeCanvas, prepare, prepareSteps, Renderer, type Box } from "./render";
 import { runSliced } from "./slice";
 import type { Flower, Head, Stitch } from "./stitcher";
-import { clamp, lerp, LINEN, LX, LY, rgbStr, rng, threadColour, type Mode, type Pt, type Rgb } from "./threads";
+import { clamp, lerp, LINEN, LX, LY, rgbStr, rng, threadColour, type Mode, type Pt, type Rgb, type Tint } from "./threads";
 import { ICONS, type IconStitch } from "./icons";
 
 export type EmbroideryOptions = {
@@ -18,7 +18,7 @@ export type EmbroideryOptions = {
 
 export type Embroidery = {
   setMode: (mode: Mode) => void;
-  setHighlight: (on: boolean) => void;
+  setHighlight: (tint: Tint) => void;
   unpick: () => void;
   measure: () => void;
   destroy: () => void;
@@ -45,7 +45,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   const R = new Renderer(() => [S, F]);
   let mode: Mode = opts.mode;
   R.mode = mode;
-  const colour = (key: string, gold = false) => threadColour(key, gold, mode);
+  const colour = (key: string, tint: Tint = false) => threadColour(key, tint, mode);
 
   let W = 0, H = 0, DH = 0, DPR = 1;
   let scrollPos = 0;
@@ -53,7 +53,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   let linen: CanvasPattern | null = null;
   let bg = makeCanvas(1, 1), frameC: HTMLCanvasElement | null = null, low: HTMLCanvasElement | null = null, full: HTMLCanvasElement | null = null;
   const cacheBox = new WeakMap<HTMLCanvasElement, CacheBox>();
-  let gp = false, sewing = false, pending = 0, settle = false, rethreading = false;
+  let gp: Tint = false, sewing = false, pending = 0, settle = false, rethreading = false;
   let snapshot: HTMLCanvasElement | null = null, snapBuf: HTMLCanvasElement | null = null, snapT = 0, holdSnap = false;
   let recomposeAt = 0, job: ((deadline: number) => boolean) | null = null;
   let raf = 0, lastDraw = 0, lowPower = false, destroyed = false;
@@ -225,7 +225,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     f.sx = x0; f.sy = y0; f.sz = sz;
   }
 
-  function rethread(on: boolean) {
+  function rethread(on: Tint) {
     finishTween();
     uiDirty = true;
     gp = on;
@@ -260,7 +260,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     uiDirty = true; sewnDirty = true; recomposeAt = 0;
     paintBg(); R.atlas(mode);
     if (sewing) { sewing = false; pending = 0; }
-    for (const s of S) { s.c0 = colour(s.key, gp && s.asph); s.c1 = null; }
+    for (const s of S) { s.c0 = colour(s.key, s.asph && gp); s.c1 = null; }
     rethreading = false;
     if (snapshot) { holdSnap = true; startJob(true); } else { composeFrame(); rebuild(); }
   }
@@ -268,7 +268,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   const sewNeedle = { x: 0, y: 0, a: -2.3, on: 0 };
   function sewAll(delay: number) {
     const start = performance.now() / 1000 + delay / 1000, n = S.length;
-    S.forEach((s, i) => { s.c0 = null; s.c1 = colour(s.key, gp && s.asph); s.t1 = start + (i / n) * SEW_TIME; });
+    S.forEach((s, i) => { s.c0 = null; s.c1 = colour(s.key, s.asph && gp); s.t1 = start + (i / n) * SEW_TIME; });
     sewing = true; pending = n; sewLo = 0; job = null; recomposeAt = 0; sewNeedle.on = 0;
     recycle(low); recycle(full);
     low = makeCache(); full = makeCache();
@@ -874,7 +874,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     }
     yield;
     if (mode !== startMode) { R.resetAtlases(); R.atlas(mode); composeFrame(); }
-    for (const s of S) { s.c0 = colour(s.key, gp && s.asph); s.c1 = null; }
+    for (const s of S) { s.c0 = colour(s.key, s.asph && gp); s.c1 = null; }
     linen = makeLinen(); paintBg();
     for (let tries = 0; tries < 3; tries++) {
       const box = { ...R.box };
@@ -913,7 +913,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       }
       applyMode(m);
     },
-    setHighlight(on) { if (on === gp) return; if (ready) rethread(on); else gp = on; },
+    setHighlight(tint) { if (tint === gp) return; if (ready) rethread(tint); else gp = tint; },
     unpick() { if (sewn.length) { unpicking = performance.now(); kick(); } },
     measure,
     destroy() {

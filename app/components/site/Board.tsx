@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { createEmbroidery, type Embroidery } from "./embroidery/engine";
-import type { Mode } from "./embroidery/threads";
+import type { Mode, Tint } from "./embroidery/threads";
 import styles from "./site.module.css";
 
 const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ? "light" : "dark");
@@ -62,7 +62,7 @@ type BoardProps = {
   panelRef: RefObject<HTMLDivElement | null>;
   rootRef: RefObject<HTMLDivElement | null>;
   mode: Mode;
-  highlight: boolean;
+  highlight: Tint;
   unpickRef: RefObject<(() => void) | null>;
   onStitches: (count: number) => void;
 };

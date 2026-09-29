@@ -1,4 +1,4 @@
-import { clamp, lerp, LIGHT, LX, LY, rgbStr, rng, threadColour, type Mode, type Pt, type Rgb } from "./threads";
+import { clamp, lerp, LIGHT, LX, LY, rgbStr, rng, threadColour, TINTS, type Mode, type Pt, type Rgb } from "./threads";
 import type { Stitch } from "./stitcher";
 
 export type Box = { x: number; y: number; s: number };
@@ -138,7 +138,7 @@ export class Renderer {
       const idx = (s.ai * 2 + s.v) * 3 + s.lv;
       shadows.add(s.ai);
       want(threadColour(s.key, false, m), idx);
-      if (s.asph) want(threadColour(s.key, true, m), idx);
+      if (s.asph) for (const tint of Object.keys(TINTS)) want(threadColour(s.key, tint, m), idx);
     }
     const AW = 2048, RH = SH + 3, jobs: [boolean, Rgb | null, number, number, number, number, number][] = [];
     let x = 2, y = 2;

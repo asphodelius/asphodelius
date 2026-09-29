@@ -8,8 +8,9 @@ const BOX = 22, PPU = 16, DIRS = 16, STEP = 0.06, GRID = 0.4, SPACING = 0.55, SH
  * The mark is rasterised once; every stitch is then laid across the stroke where it is narrowest, which is how a satin
  * column runs, and strokes thinner than a thread become short stitches along the line instead.
  * `bold` thickens the shape (in icon units) so hairlines survive being stitched at icon size.
+ * `angle` lays every stitch in one fixed direction instead, which suits big solid shapes.
  */
-export function traceMark(mark: Mark, size: number, bold: number, keys: string[], w = 1.35): IconStitch[] {
+export function traceMark(mark: Mark, size: number, bold: number, keys: string[], w = 1.35, angle?: number): IconStitch[] {
   const px = BOX * PPU, canvas = document.createElement("canvas");
   canvas.width = canvas.height = px;
   const g = canvas.getContext("2d", { willReadFrequently: true });
@@ -46,11 +47,12 @@ export function traceMark(mark: Mark, size: number, bold: number, keys: string[]
     for (let x = GRID / 2; x < BOX; x += GRID) {
       if (!inside(x, y) || covered[Math.floor(y * PPU) * px + Math.floor(x * PPU)]) continue;
       let best = Infinity, ang = 0, back = 0, fwd = 0;
-      for (let i = 0; i < DIRS; i++) {
+      if (angle !== undefined) { ang = angle; fwd = reach(x, y, Math.cos(angle), Math.sin(angle), 10); back = reach(x, y, -Math.cos(angle), -Math.sin(angle), 10); best = SHORT; }
+      else for (let i = 0; i < DIRS; i++) {
         const a = (i * Math.PI) / DIRS, dx = Math.cos(a), dy = Math.sin(a), f = reach(x, y, dx, dy, 10), b = reach(x, y, -dx, -dy, 10);
         if (f + b < best) { best = f + b; ang = a; back = b; fwd = f; }
       }
-      if (best < SHORT) {
+      if (best < SHORT && angle === undefined) {
         ang += Math.PI / 2;
         const dx = Math.cos(ang), dy = Math.sin(ang);
         fwd = Math.min(SHORT, reach(x, y, dx, dy, SHORT));

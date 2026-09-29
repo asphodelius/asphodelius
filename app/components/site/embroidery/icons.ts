@@ -1,10 +1,11 @@
-import { DUAL_ASCENT, GITHUB, TELEGRAM } from "./marks";
+import { DUAL_ASCENT, EMAIL, GITHUB, TELEGRAM } from "./marks";
 import { traceMark } from "./trace";
 import type { Pt } from "./threads";
 
 export type IconStitch = { key: string; w: number; p0: Pt; p1: Pt; knot?: Pt; r: number };
 
 const seg = (p0: Pt, p1: Pt, w: number, key: string): IconStitch => ({ key, w, p0, p1, r: 0 });
+
 const knot = (p: Pt, r: number, key: string): IconStitch => ({ key, w: 0, p0: p, p1: p, knot: p, r });
 
 function triFill(o: IconStitch[], A: Pt, B: Pt, C: Pt, key: string, w: number, n: number) {
@@ -48,7 +49,7 @@ function patch(o: IconStitch[], ramp: string[], edge: string, radius: number) {
   for (let y = 1.1; y <= 20.9; y += 1.15, row++) {
     const x0 = inset(y) + 0.6, x1 = 22 - inset(y) - 0.6, len = x1 - x0, cuts = Math.max(1, Math.round(len / 7)), off = (row % 3) / 3;
     for (let k = 0; k < cuts; k++) {
-      const f0 = Math.max(0, (k - off * 0.6) / cuts), f1 = Math.min(1, (k + 1 - off * 0.6) / cuts);
+      const f0 = Math.max(0, (k - off * 0.6) / cuts), f1 = k === cuts - 1 ? 1 : (k + 1 - off * 0.6) / cuts;
       o.push(seg([x0 + len * f0, y], [x0 + len * f1, y], 1.4, ramp[(row * 2 + k * 3) % ramp.length]));
     }
   }
@@ -73,7 +74,7 @@ export const ICONS: Record<string, () => IconStitch[]> = {
   },
   "good-people"() {
     const o: IconStitch[] = [], s = 0.78, at = (x: number, y: number): Pt => [11 + (x - 25) * s, 11 + (y - 25) * s], white = ["wb3", "wb3", "wb2"];
-    patch(o, ["og2", "og1", "og2", "og3", "og2"], "og0", 4.6);
+    patch(o, ["og2", "og1", "og2", "og3", "og2"], "og1", 4.6);
     bar(o, at(22.3, 16.75), at(31.2, 16.75), 3.5 * s, white);
     bar(o, at(33.1, 15), at(33.1, 26.8), 3.8 * s, white);
     const c = at(22.3, 28.2);
@@ -82,11 +83,8 @@ export const ICONS: Record<string, () => IconStitch[]> = {
   },
   mail() {
     const o: IconStitch[] = [];
-    for (let y = 6.3; y <= 15.2; y += 1.5) o.push(seg([2.3, y], [19.7, y], 1.75, "ys3"));
-    triFill(o, [11, 11.4], [2.2, 5], [19.8, 5], "ys2", 1.7, 7);
-    stemPts(o, [[1.5, 4.5], [20.5, 4.5], [20.5, 16], [1.5, 16], [1.5, 4.5]], "uiA", 1.3);
-    stemPts(o, [[1.9, 4.9], [11, 11.4], [20.1, 4.9]], "uiA", 1.15);
-    o.push(knot([11, 11.4], 2.4, "rs2"));
+    o.push(...traceMark(EMAIL, 22, 0, ["ys2", "ys3", "ys2", "ys1"]));
+    o.push(knot([11, 12.6], 1.9, "rs2"));
     return o;
   },
   github() {
@@ -96,7 +94,8 @@ export const ICONS: Record<string, () => IconStitch[]> = {
   },
   telegram() {
     const o: IconStitch[] = [];
-    o.push(...traceMark(TELEGRAM, 22, 0, ["bl1", "bl2", "bl1", "bl3"]));
+    o.push(...traceMark(TELEGRAM, 22, 0, ["bl1", "bl2", "bl1", "bl3"], 1.35, -0.55));
+    triFill(o, [14.30, 9.53], [9.62, 14.67], [11.73, 17.05], "bl3", 1.3, 7);
     return o;
   },
 };

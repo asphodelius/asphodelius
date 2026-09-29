@@ -61,7 +61,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     previous.current = open;
   }, [open]);
 
-  const highlight = [open, hovered].some(slug => slug && findProject(slug)?.highlight);
+  const highlight = (hovered && findProject(hovered)?.tint) || (open && findProject(open)?.tint) || false;
 
   return (
     <div className={styles.site} data-open={open ? "" : undefined} ref={rootRef}>
