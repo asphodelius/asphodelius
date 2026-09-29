@@ -65,7 +65,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.site} data-open={open ? "" : undefined} ref={rootRef}>
-      <div className={styles.loader} aria-hidden="true">
+      <div className={styles.loader} aria-hidden="true" data-loader="">
         <svg className={styles.loaderSvg} viewBox="0 0 200 48" width="240" height="58">
           <defs>
             <clipPath id="loader-above">

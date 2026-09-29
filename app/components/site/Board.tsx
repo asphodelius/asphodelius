@@ -9,10 +9,25 @@ const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ?
 
 let revealed = false;
 
+function hideLoader(fade: boolean) {
+  document.documentElement.dataset.ready = "";
+  const el = document.querySelector<HTMLElement>("[data-loader]");
+  if (!el || el.style.display === "none") return;
+  if (!fade) { el.style.display = "none"; return; }
+  const start = performance.now();
+  const step = (now: number) => {
+    if (el.style.display === "none") return;
+    const k = Math.min(1, Math.max(0, (now - start) / 600));
+    el.style.opacity = String(1 - k * k * (3 - 2 * k));
+    if (k < 1) requestAnimationFrame(step); else el.style.display = "none";
+  };
+  requestAnimationFrame(step);
+  window.setTimeout(() => { el.style.display = "none"; }, 1200);
+}
+
 function reveal() {
-  const root = document.documentElement;
-  if (revealed) { root.dataset.ready = ""; return; }
-  window.setTimeout(() => { revealed = true; root.dataset.ready = ""; }, Math.max(60, 500 - performance.now()));
+  if (revealed) { hideLoader(false); return; }
+  window.setTimeout(() => { revealed = true; hideLoader(true); }, Math.max(60, 500 - performance.now()));
 }
 
 function restoreRoot() {
@@ -24,7 +39,7 @@ function restoreRoot() {
     root.dataset.mode = m;
     root.dataset.ink = m;
   }
-  if (revealed) root.dataset.ready = "";
+  if (revealed) hideLoader(false);
 }
 
 function swapInk(mode: Mode) {
