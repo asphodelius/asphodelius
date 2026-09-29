@@ -1,5 +1,5 @@
-import { DUAL_ASCENT, EMAIL, GITHUB, TELEGRAM } from "./marks";
-import { traceMark } from "./trace";
+import { DUAL_ASCENT, EMAIL, GITHUB, TELEGRAM, type Mark } from "./marks";
+import { outlineMark, traceMark } from "./trace";
 import type { Pt } from "./threads";
 
 export type IconStitch = { key: string; w: number; p0: Pt; p1: Pt; knot?: Pt; r: number };
@@ -18,6 +18,16 @@ function sewFromTopLeft(o: IconStitch[], from: number) {
   o.push(...tail);
 }
 
+/** Threads in runs of `run` stitches, like variegated floss: the colour drifts along the line instead of alternating. */
+const variegated = (keys: string[], run = 5) => keys.flatMap(k => Array<string>(run).fill(k));
+
+/** A stem-stitch outline on the edge of a mark, sewn over the fill. */
+function outline(o: IconStitch[], mark: Mark, size: number, keys: string[]) {
+  const from = o.length;
+  for (const pts of outlineMark(mark, size, 1.4)) stemPts(o, pts, variegated(keys), 1.15, 1.7);
+  sewFromTopLeft(o, from);
+}
+
 function triFill(o: IconStitch[], A: Pt, B: Pt, C: Pt, key: string, w: number, n: number) {
   for (let k = 1; k <= n; k++) {
     const f = k / (n + 1);
@@ -25,12 +35,13 @@ function triFill(o: IconStitch[], A: Pt, B: Pt, C: Pt, key: string, w: number, n
   }
 }
 
-function stemPts(o: IconStitch[], pts: Pt[], key: string, w: number, step = 2.3) {
+function stemPts(o: IconStitch[], pts: Pt[], key: string | string[], w: number, step = 2.3) {
+  let count = 0;
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L / step));
     for (let k = 0; k < n; k++) {
       const f0 = k / n, f1 = Math.min(1, (k + 1.6) / n);
-      o.push(seg([a[0] + (b[0] - a[0]) * f0, a[1] + (b[1] - a[1]) * f0], [a[0] + (b[0] - a[0]) * f1, a[1] + (b[1] - a[1]) * f1], w, key));
+      o.push(seg([a[0] + (b[0] - a[0]) * f0, a[1] + (b[1] - a[1]) * f0], [a[0] + (b[0] - a[0]) * f1, a[1] + (b[1] - a[1]) * f1], w, typeof key === "string" ? key : key[count++ % key.length]));
     }
   }
 }
@@ -97,19 +108,22 @@ export const ICONS: Record<string, () => IconStitch[]> = {
   },
   mail() {
     const o: IconStitch[] = [];
-    o.push(...traceMark(EMAIL, 22, 0, ["ys2", "ys3", "ys2", "ys1"]));
-    o.push(knot([11, 12.6], 1.9, "rs2"));
+    o.push(...traceMark(EMAIL, 20.5, 0, ["ys2", "ys3", "ys2", "ys1"]));
+    outline(o, EMAIL, 20.5, ["bl2", "pl3", "pk3", "bl3", "lg3"]);
+    o.push(knot([11.00, 12.45], 1.8, "rs2"));
     return o;
   },
   github() {
     const o: IconStitch[] = [];
-    o.push(...traceMark(GITHUB, 21, 0, ["gh1", "gh1", "gh2", "gh0"]));
+    o.push(...traceMark(GITHUB, 20, 0, ["gh1", "gh1", "gh2", "gh0"]));
+    outline(o, GITHUB, 20, ["lg3", "ys2", "orn", "rs3", "pk3"]);
     return o;
   },
   telegram() {
     const o: IconStitch[] = [];
-    o.push(...traceMark(TELEGRAM, 22, 0, ["bl1", "bl2", "bl1", "bl3"], 1.35, -0.55));
-    triFill(o, [14.30, 9.53], [9.62, 14.67], [11.73, 17.05], "bl3", 1.3, 7);
+    o.push(...traceMark(TELEGRAM, 20.5, 0, ["bl1", "bl2", "bl1", "bl3"], 1.35, -0.55));
+    triFill(o, [14.07, 9.63], [9.72, 14.42], [11.68, 16.64], "bl3", 1.3, 7);
+    outline(o, TELEGRAM, 20.5, ["ys2", "orn", "pk3", "pl3", "bl3"]);
     return o;
   },
 };

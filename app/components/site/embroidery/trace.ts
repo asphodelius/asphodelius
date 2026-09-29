@@ -1,5 +1,6 @@
 import type { IconStitch } from "./icons";
 import type { Mark } from "./marks";
+import type { Pt } from "./threads";
 
 const BOX = 22, PPU = 16, DIRS = 16, STEP = 0.06, GRID = 0.4, SPACING = 0.55, SHORT = 1.3, LONGEST = 6;
 
@@ -67,4 +68,38 @@ export function traceMark(mark: Mark, size: number, bold: number, keys: string[]
     }
   }
   return out;
+}
+
+/**
+ * Points along the outline of a mark, one closed loop per subpath, in the same icon units and placement as `traceMark`.
+ * Measured with the browser's own SVG geometry, so it needs the DOM and only splits paths on absolute `M` commands.
+ */
+export function outlineMark(mark: Mark, size: number, step: number): Pt[][] {
+  const ns = "http://www.w3.org/2000/svg", k = size / Math.max(mark.size[0], mark.size[1]);
+  const ox = (BOX - mark.size[0] * k) / 2, oy = (BOX - mark.size[1] * k) / 2;
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("width", "0");
+  svg.setAttribute("height", "0");
+  svg.style.cssText = "position:absolute;visibility:hidden;pointer-events:none";
+  document.body.appendChild(svg);
+  const loops: Pt[][] = [];
+  try {
+    for (const p of mark.paths) {
+      for (const sub of p.d.split(/(?=M)/)) {
+        if (!sub.trim()) continue;
+        const el = document.createElementNS(ns, "path");
+        el.setAttribute("d", sub);
+        svg.appendChild(el);
+        const len = el.getTotalLength(), n = Math.max(6, Math.round((len * k) / step)), pts: Pt[] = [];
+        for (let i = 0; i <= n; i++) {
+          const q = el.getPointAtLength((len * (i % n)) / n);
+          pts.push([ox + q.x * k, oy + q.y * k]);
+        }
+        loops.push(pts);
+      }
+    }
+  } finally {
+    svg.remove();
+  }
+  return loops;
 }
