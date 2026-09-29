@@ -8,6 +8,16 @@ const seg = (p0: Pt, p1: Pt, w: number, key: string): IconStitch => ({ key, w, p
 
 const knot = (p: Pt, r: number, key: string): IconStitch => ({ key, w: 0, p0: p, p1: p, knot: p, r });
 
+/**
+ * Stitches cast their shadow towards the bottom right, so a stitch laid after its neighbours darkens them when the run
+ * heads up and left. Ordering a group by position makes every shadow fall on thread that is still to be sewn.
+ */
+function sewFromTopLeft(o: IconStitch[], from: number) {
+  const at = (s: IconStitch) => s.p0[0] + s.p0[1] + s.p1[0] + s.p1[1];
+  const tail = o.splice(from).sort((a, b) => at(a) - at(b));
+  o.push(...tail);
+}
+
 function triFill(o: IconStitch[], A: Pt, B: Pt, C: Pt, key: string, w: number, n: number) {
   for (let k = 1; k <= n; k++) {
     const f = k / (n + 1);
@@ -58,7 +68,9 @@ function patch(o: IconStitch[], ramp: string[], edge: string, radius: number) {
     for (let i = 0; i <= 5; i++) ring.push([cx + Math.cos(a + (i * Math.PI) / 10) * (radius - 0.4), cy + Math.sin(a + (i * Math.PI) / 10) * (radius - 0.4)]);
   }
   ring.push(ring[0]);
+  const from = o.length;
   stemPts(o, ring, edge, 1.1, 1.7);
+  sewFromTopLeft(o, from);
 }
 
 /**
@@ -75,10 +87,12 @@ export const ICONS: Record<string, () => IconStitch[]> = {
   "good-people"() {
     const o: IconStitch[] = [], s = 0.78, at = (x: number, y: number): Pt => [11 + (x - 25) * s, 11 + (y - 25) * s], white = ["wb3", "wb3", "wb2"];
     patch(o, ["og2", "og1", "og2", "og3", "og2"], "og1", 4.6);
+    const from = o.length;
     bar(o, at(22.3, 16.75), at(31.2, 16.75), 3.5 * s, white);
     bar(o, at(33.1, 15), at(33.1, 26.8), 3.8 * s, white);
     const c = at(22.3, 28.2);
     arcBar(o, c, 5.01 * s, -Math.PI / 2, Math.PI, 3.5 * s, white);
+    sewFromTopLeft(o, from);
     return o;
   },
   mail() {
