@@ -8,6 +8,7 @@ export default function ResumeLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ru" className={fontClass} suppressHydrationWarning>
       <head>
+        <meta name="darkreader-lock" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="antialiased">{children}</body>
