@@ -18,6 +18,7 @@ export const THREADS: Record<string, string> = {
   ys0: "#B98E24", ys1: "#E0A51E", ys2: "#F3CB42", ys3: "#F8E08A", orn: "#E0711E", tendril: "#7E9A3A",
   wb1: "#BDB8AE", wb2: "#E6E2DA", wb3: "#FBFAF7",
   bg0: "#B9A48F", bg1: "#EBDDCC", bg2: "#F4EADD", bg3: "#FCF6EE",
+  gh0: "#1B1F24", gh1: "#24292F", gh2: "#3B424A",
   br0: "#2A1E16", br1: "#37291F", br2: "#54402F",
   og0: "#A64A08", og1: "#D0660C", og2: "#EE740C", og3: "#FF9233",
   uiA: "#8A6A52", uiB: "#B3261E", disc2: "#5C3E27",
@@ -28,7 +29,7 @@ export const GOLD: Record<string, string> = {
 };
 
 export const DARK_ADJUST: Record<string, string> = {
-  uiA: "#A8927C", uiB: "#E2A12E", lg0: "#24462A", rs0: "#6A1820", pk0: "#761A46", pl1: "#4E3078", pb1: "#661B34", bl0: "#2E5793", pray: "#1E1028",
+  uiA: "#A8927C", gh0: "#C4C9CF", gh1: "#E2E5E8", gh2: "#A9AFB6", uiB: "#E2A12E", lg0: "#24462A", rs0: "#6A1820", pk0: "#761A46", pl1: "#4E3078", pb1: "#661B34", bl0: "#2E5793", pray: "#1E1028",
 };
 
 const hexCache = new Map<string, Rgb>();

@@ -131,8 +131,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
         <div className={styles.foot}>
           <ul className={styles.links}>
-            <li><a href="https://github.com/asphodelius" target="_blank" rel="noopener noreferrer" data-stitch="" data-icon="code">GitHub</a></li>
-            <li><a href="https://t.me/stereoling" target="_blank" rel="noopener noreferrer" data-stitch="" data-icon="plane">Telegram</a></li>
+            <li><a href="https://github.com/asphodelius" target="_blank" rel="noopener noreferrer" data-stitch="" data-icon="github">GitHub</a></li>
+            <li><a href="https://t.me/stereoling" target="_blank" rel="noopener noreferrer" data-stitch="" data-icon="telegram">Telegram</a></li>
             <li><a href="mailto:root@asphodelius.dev" data-stitch="" data-icon="mail">Email</a></li>
           </ul>
           <div className={styles.prefs}>

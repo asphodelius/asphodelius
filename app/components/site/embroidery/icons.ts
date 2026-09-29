@@ -1,4 +1,4 @@
-import { DUAL_ASCENT } from "./marks";
+import { DUAL_ASCENT, GITHUB, TELEGRAM } from "./marks";
 import { traceMark } from "./trace";
 import type { Pt } from "./threads";
 
@@ -89,22 +89,14 @@ export const ICONS: Record<string, () => IconStitch[]> = {
     o.push(knot([11, 11.4], 2.4, "rs2"));
     return o;
   },
-  plane() {
-    const o: IconStitch[] = [], A: Pt = [20.5, 2.5], B: Pt = [1, 9], C: Pt = [9, 19.5], D: Pt = [9, 12];
-    triFill(o, A, B, D, "bl3", 1.75, 9);
-    triFill(o, A, D, C, "bl1", 1.75, 8);
-    stemPts(o, [A, B, D, A], "bl0", 1.1);
-    stemPts(o, [D, C, A], "bl0", 1.1);
+  github() {
+    const o: IconStitch[] = [];
+    o.push(...traceMark(GITHUB, 21, 0, ["gh1", "gh1", "gh2", "gh0"]));
     return o;
   },
-  code() {
+  telegram() {
     const o: IconStitch[] = [];
-    bar(o, [7, 5], [1.8, 11], 2.3, "lg1");
-    bar(o, [1.8, 11], [7, 17], 2.3, "lg1");
-    bar(o, [15, 5], [20.2, 11], 2.3, "lg1");
-    bar(o, [20.2, 11], [15, 17], 2.3, "lg1");
-    bar(o, [12.8, 3.2], [9.2, 18.8], 2.2, "rs3");
-    o.push(knot([1.8, 11], 1.9, "lg2"), knot([20.2, 11], 1.9, "lg2"));
+    o.push(...traceMark(TELEGRAM, 22, 0, ["bl1", "bl2", "bl1", "bl3"]));
     return o;
   },
 };
