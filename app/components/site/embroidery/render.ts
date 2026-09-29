@@ -48,8 +48,10 @@ export function makeCanvas(w: number, h: number) {
   return c;
 }
 
+const gecko = typeof navigator !== "undefined" && /Gecko\/\d/.test(navigator.userAgent) && !/like Gecko/.test(navigator.userAgent);
+
 export function context(c: HTMLCanvasElement) {
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", gecko ? { willReadFrequently: true } : undefined);
   if (!g) throw new Error("2d canvas is not available");
   return g;
 }

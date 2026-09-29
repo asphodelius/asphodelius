@@ -1,15 +1,30 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { createEmbroidery, type Embroidery } from "./embroidery/engine";
 import type { Mode } from "./embroidery/threads";
 import styles from "./site.module.css";
 
 const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ? "light" : "dark");
 
+let revealed = false;
+
 function reveal() {
   const root = document.documentElement;
-  window.setTimeout(() => { root.dataset.ready = ""; }, Math.max(60, 500 - performance.now()));
+  if (revealed) { root.dataset.ready = ""; return; }
+  window.setTimeout(() => { revealed = true; root.dataset.ready = ""; }, Math.max(60, 500 - performance.now()));
+}
+
+function restoreRoot() {
+  const root = document.documentElement;
+  if (!root.dataset.mode) {
+    let m: string | null = null;
+    try { m = localStorage.getItem("mode"); } catch {}
+    if (m !== "light" && m !== "dark") m = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    root.dataset.mode = m;
+    root.dataset.ink = m;
+  }
+  if (revealed) root.dataset.ready = "";
 }
 
 function swapInk(mode: Mode) {
@@ -32,6 +47,7 @@ export function Board({ panelRef, rootRef, mode, highlight, unpickRef, onStitche
   const apiRef = useRef<Embroidery | null>(null);
   const stitchesRef = useRef(onStitches);
 
+  useLayoutEffect(restoreRoot, []);
   useEffect(() => { stitchesRef.current = onStitches; }, [onStitches]);
 
   useEffect(() => {
