@@ -4,13 +4,6 @@ import type { Pt } from "./threads";
 
 const BOX = 22, PPU = 16, DIRS = 16, STEP = 0.06, GRID = 0.4, SPACING = 0.55, SHORT = 1.3, LONGEST = 6;
 
-/**
- * Turns SVG path data into satin stitches inside the 22 x 22 icon box.
- * The mark is rasterised once; every stitch is then laid across the stroke where it is narrowest, which is how a satin
- * column runs, and strokes thinner than a thread become short stitches along the line instead.
- * `bold` thickens the shape (in icon units) so hairlines survive being stitched at icon size.
- * `angle` lays every stitch in one fixed direction instead, which suits big solid shapes.
- */
 export function traceMark(mark: Mark, size: number, bold: number, keys: string[], w = 1.35, angle?: number): IconStitch[] {
   const px = BOX * PPU, canvas = document.createElement("canvas");
   canvas.width = canvas.height = px;
@@ -70,10 +63,6 @@ export function traceMark(mark: Mark, size: number, bold: number, keys: string[]
   return out;
 }
 
-/**
- * Points along the outline of a mark, one closed loop per subpath, in the same icon units and placement as `traceMark`.
- * Measured with the browser's own SVG geometry, so it needs the DOM and only splits paths on absolute `M` commands.
- */
 export function outlineMark(mark: Mark, size: number, step: number): Pt[][] {
   const ns = "http://www.w3.org/2000/svg", k = size / Math.max(mark.size[0], mark.size[1]);
   const ox = (BOX - mark.size[0] * k) / 2, oy = (BOX - mark.size[1] * k) / 2;

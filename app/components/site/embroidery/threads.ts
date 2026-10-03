@@ -39,7 +39,6 @@ export function hex(h: string): Rgb {
   return c;
 }
 
-/** Alternative thread sets the asphodels are restitched in while a project is open or hovered. */
 export const TINTS: Record<string, Record<string, string>> = {
   gold: GOLD,
   sand: { petal: "#CDA57F", petal2: "#B98B62", petalIn: "#8F6642", vein: "#4A3324", filament: "#6B4A2F", anther: "#2A1E16", ovary: "#5A4630" },

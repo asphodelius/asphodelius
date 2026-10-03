@@ -1,4 +1,3 @@
-/** Logo marks as SVG path data, traced into stitches by trace.ts. Coordinates are the original SVG's own. */
 export type Mark = { size: [number, number]; paths: { d: string; evenodd?: boolean }[] };
 
 export const DUAL_ASCENT: Mark = {

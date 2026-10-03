@@ -8,20 +8,14 @@ const seg = (p0: Pt, p1: Pt, w: number, key: string): IconStitch => ({ key, w, p
 
 const knot = (p: Pt, r: number, key: string): IconStitch => ({ key, w: 0, p0: p, p1: p, knot: p, r });
 
-/**
- * Stitches cast their shadow towards the bottom right, so a stitch laid after its neighbours darkens them when the run
- * heads up and left. Ordering a group by position makes every shadow fall on thread that is still to be sewn.
- */
 function sewFromTopLeft(o: IconStitch[], from: number) {
   const at = (s: IconStitch) => s.p0[0] + s.p0[1] + s.p1[0] + s.p1[1];
   const tail = o.splice(from).sort((a, b) => at(a) - at(b));
   o.push(...tail);
 }
 
-/** Threads in runs of `run` stitches, like variegated floss: the colour drifts along the line instead of alternating. */
 const variegated = (keys: string[], run = 8) => keys.flatMap(k => Array<string>(run).fill(k));
 
-/** A stem-stitch outline on the edge of a mark, sewn over the fill. */
 function outline(o: IconStitch[], mark: Mark, size: number, keys: string[]) {
   const from = o.length;
   for (const pts of outlineMark(mark, size, 1.4)) stemPts(o, pts, variegated(keys), 1.15, 1.7);
@@ -54,7 +48,6 @@ function bar(o: IconStitch[], a: Pt, b: Pt, width: number, key: string | string[
   }
 }
 
-/** Satin stitches laid radially along an arc, angles in canvas convention (0 = right, positive = clockwise). */
 function arcBar(o: IconStitch[], c: Pt, r: number, a0: number, a1: number, width: number, key: string | string[]) {
   const n = Math.round((Math.abs(a1 - a0) * r) / 1.05);
   for (let i = 0; i <= n; i++) {
@@ -63,7 +56,6 @@ function arcBar(o: IconStitch[], c: Pt, r: number, a0: number, a1: number, width
   }
 }
 
-/** A rounded square of tatami fill with a darker border, filling the 22 x 22 icon box. */
 function patch(o: IconStitch[], ramp: string[], edge: string, radius: number) {
   const inset = (y: number) => { const d = Math.max(0, radius - Math.min(y, 22 - y)); return radius - Math.sqrt(Math.max(0, radius * radius - d * d)); };
   let row = 0;
@@ -84,10 +76,6 @@ function patch(o: IconStitch[], ramp: string[], edge: string, radius: number) {
   sewFromTopLeft(o, from);
 }
 
-/**
- * Project logos live here, keyed by project slug: a stitched patch in the brand colour with the mark on top.
- * Draw the mark in its own SVG units and map it with `at`, so a new logo is a handful of bar/arcBar calls.
- */
 export const ICONS: Record<string, () => IconStitch[]> = {
   "dual-ascent"() {
     const o: IconStitch[] = [];

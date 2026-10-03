@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import styles from "./site.module.css";
 
-/** The middle column. Focus moves to its heading when it opens, so keyboard and screen reader users land in it. */
 export function Story({ title, meta, children }: { title: string; meta?: string; children: ReactNode }) {
   const t = useTranslations("Site");
   const headingRef = useRef<HTMLHeadingElement>(null);

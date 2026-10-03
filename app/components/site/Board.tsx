@@ -7,37 +7,14 @@ import styles from "./site.module.css";
 
 const domMode = (): Mode => (document.documentElement.dataset.mode === "light" ? "light" : "dark");
 
-let revealed = false;
-
-function hideLoader(fade: boolean) {
-  document.documentElement.dataset.ready = "";
-  const el = document.querySelector<HTMLElement>("[data-loader]");
-  if (!el || el.style.display === "none") return;
-  if (!fade) { el.style.display = "none"; return; }
-  const start = performance.now();
-  const step = (now: number) => {
-    if (el.style.display === "none") return;
-    const k = Math.min(1, Math.max(0, (now - start) / 600));
-    el.style.opacity = String(1 - k * k * (3 - 2 * k));
-    if (k < 1) requestAnimationFrame(step); else el.style.display = "none";
-  };
-  requestAnimationFrame(step);
-  window.setTimeout(() => { el.style.display = "none"; }, 1200);
-}
-
 function reveal() {
   try { sessionStorage.setItem("sewn", "1"); } catch {}
-  if (revealed) { hideLoader(false); return 0; }
-  const wait = Math.max(60, 500 - performance.now());
-  window.setTimeout(() => { revealed = true; hideLoader(true); }, wait);
-  return wait;
+  document.documentElement.dataset.ready = "";
+  return 0;
 }
 
 function firstVisit() {
-  try {
-    if (sessionStorage.getItem("sewn")) return false;
-  } catch {}
-  return !revealed;
+  try { return !sessionStorage.getItem("sewn"); } catch { return true; }
 }
 
 function restoreRoot() {
@@ -49,7 +26,6 @@ function restoreRoot() {
     root.dataset.mode = m;
     root.dataset.ink = m;
   }
-  if (revealed) hideLoader(false);
 }
 
 function swapInk(mode: Mode) {

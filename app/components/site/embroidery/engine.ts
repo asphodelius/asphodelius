@@ -13,7 +13,7 @@ export type EmbroideryOptions = {
   onStitches?: (count: number) => void;
   onSwap?: (mode: Mode) => void;
   sew?: boolean;
-  onReady?: () => number | void;
+  onReady?: () => void;
 };
 
 export type Embroidery = {
@@ -53,7 +53,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   let linen: CanvasPattern | null = null;
   let bg = makeCanvas(1, 1), frameC: HTMLCanvasElement | null = null, low: HTMLCanvasElement | null = null, full: HTMLCanvasElement | null = null;
   const cacheBox = new WeakMap<HTMLCanvasElement, CacheBox>();
-  let gp: Tint = false, sewing = false, pending = 0, settle = false, rethreading = false;
+  let gp: Tint = false, deferred: Tint | undefined, sewing = false, pending = 0, settle = false, rethreading = false;
   let snapshot: HTMLCanvasElement | null = null, snapBuf: HTMLCanvasElement | null = null, snapT = 0, holdSnap = false;
   let recomposeAt = 0, job: ((deadline: number) => boolean) | null = null;
   let raf = 0, lastDraw = 0, lowPower = false, destroyed = false;
@@ -93,22 +93,65 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     const b = c && cacheBox.get(c);
     return !!b && b.s === R.box.s && b.x === R.box.x && b.y === R.box.y && b.W === W && b.H === H;
   };
-  function blit(c: HTMLCanvasElement | null) {
+  function blit(c: HTMLCanvasElement | null, g: CanvasRenderingContext2D = ctx) {
     const b = c && cacheBox.get(c);
     if (!c || !b) return;
     const k = R.box.s / b.s;
-    if (!tilt) { ctx.drawImage(c, R.box.x - b.x * k, R.box.y - b.y * k, b.W * k, b.H * k); return; }
+    if (!tilt) { g.drawImage(c, R.box.x - b.x * k, R.box.y - b.y * k, b.W * k, b.H * k); return; }
     const cx = R.box.x + R.box.s / 2, cy = R.box.y + R.box.s / 2;
-    ctx.save();
-    ctx.translate(cx, cy); ctx.rotate(tilt); ctx.translate(-cx, -cy);
-    ctx.drawImage(c, R.box.x - b.x * k, R.box.y - b.y * k, b.W * k, b.H * k);
-    ctx.restore();
+    g.save();
+    g.translate(cx, cy); g.rotate(tilt); g.translate(-cx, -cy);
+    g.drawImage(c, R.box.x - b.x * k, R.box.y - b.y * k, b.W * k, b.H * k);
+    g.restore();
+  }
+
+  const glider = document.createElement("canvas");
+  glider.className = canvas.className;
+  glider.setAttribute("aria-hidden", "true");
+  glider.style.cssText = "pointer-events:none;transform-origin:0 0;will-change:transform;visibility:hidden";
+  canvas.after(glider);
+
+  const fxLayer = document.createElement("canvas");
+  fxLayer.className = canvas.className;
+  fxLayer.setAttribute("aria-hidden", "true");
+  fxLayer.style.pointerEvents = "none";
+  glider.after(fxLayer);
+  const fx = context(fxLayer);
+  let fxDrawn = false;
+
+  let gliding = false, glideFrom: Box = { x: 0, y: 0, s: 1 }, glideScroll = 0;
+
+  function liftBouquet(from: Box) {
+    if (!full) return;
+    if (glider.width !== canvas.width) glider.width = canvas.width;
+    if (glider.height !== canvas.height) glider.height = canvas.height;
+    const g = context(glider);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, glider.width, glider.height);
+    R.setBase(g, DPR, 0, -sy() * DPR);
+    tilt = 0;
+    R.withBox(from, () => blit(full, g));
+    glideFrom = from; glideScroll = sy(); gliding = true;
+    placeBouquet(from, 0);
+  }
+  function placeBouquet(b: Box = R.box, lean = tilt) {
+    const f = glideFrom, k = b.s / f.s;
+    const fx = f.x + f.s / 2, fy = f.y + f.s / 2 - glideScroll, bx = b.x + b.s / 2, by = b.y + b.s / 2 - sy();
+    glider.style.transform = `translate(${bx.toFixed(2)}px,${by.toFixed(2)}px) rotate(${lean.toFixed(4)}rad) scale(${k.toFixed(5)}) translate(${(-fx).toFixed(2)}px,${(-fy).toFixed(2)}px)`;
+    glider.style.visibility = "visible";
+  }
+  function dropBouquet() {
+    if (!gliding) return;
+    gliding = false;
+    glider.style.visibility = "hidden";
+    glider.style.transform = "";
   }
 
   function finishTween() {
     if (!tween) return;
     R.box = { ...tween.to };
     tween = null; tilt = 0;
+    dropBouquet();
     recomposeAt = performance.now();
   }
   let bgKey = "";
@@ -184,6 +227,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     const cw = Math.round(W * DPR), ch = Math.round(H * DPR);
     if (canvas.width !== cw) canvas.width = cw;
     if (canvas.height !== ch) canvas.height = ch;
+    if (fxLayer.width !== cw) fxLayer.width = cw;
+    if (fxLayer.height !== ch) fxLayer.height = ch;
     R.setBase(ctx, DPR, 0, 0);
     root.style.setProperty("--pad", framePad(W) + "px");
     const r = panel.getBoundingClientRect(), s = Math.min(r.width, r.height) * 0.97;
@@ -192,7 +237,12 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   }
 
   function layout() {
-    const from: Box | null = ready && !reduced && !sewing && !rethreading && !holdSnap && !snapshot && !job && full ? { ...R.box } : null;
+    const canGlide = ready && !reduced && !sewing && !holdSnap && !!full;
+    if (canGlide) {
+      if (rethreading) settleRethread();
+      snapshot = null;
+    }
+    const from: Box | null = canGlide ? { ...R.box } : null;
     const w0 = W, h0 = H, d0 = DPR;
     metrics();
     if (frameKey !== `${W}x${H}` || !R.hasAtlas(mode)) rebuildFrame();
@@ -205,9 +255,11 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (glide && from) {
       tween = { from, to, t0: performance.now(), dir: to.x < from.x ? -1 : 1 };
       recomposeAt = 0;
+      liftBouquet(from);
       if (!R.hasAtlas(mode)) runSliced(R.atlasSteps(mode), 8, () => destroyed, () => {});
     } else {
       tween = null; tilt = 0;
+      dropBouquet();
       if (hurry) composeFrame();
       if (sewing || !full || hurry) rebuild();
       else recomposeAt = performance.now() + 250;
@@ -254,6 +306,12 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     }
     rethreading = true;
     kick();
+  }
+
+  function settleRethread() {
+    for (const f of runs) { for (const s of f.list) if (s.c1) { s.c0 = s.c1; s.c1 = null; } f.done = true; }
+    rethreading = false;
+    rebuildFull();
   }
 
   function recolour() {
@@ -321,12 +379,14 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   function draw(now: number) {
     const t = now / 1000;
     let busy = false;
+    if (!tween && deferred !== undefined) { const d = deferred; deferred = undefined; if (d !== gp) rethread(d); }
     if (tween) {
       const k = clamp((now - tween.t0) / GLIDE, 0, 1), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
       const { from, to } = tween;
       R.box = { x: lerp(from.x, to.x, e), y: lerp(from.y, to.y, e), s: lerp(from.s, to.s, e) };
       tilt = tween.dir * LEAN * Math.sin(Math.PI * k);
-      if (k >= 1) { R.box = { ...to }; tween = null; tilt = 0; recomposeAt = now; } else busy = true;
+      if (k >= 1) { R.box = { ...to }; tween = null; tilt = 0; recomposeAt = now; dropBouquet(); }
+      else { busy = true; if (gliding) placeBouquet(); }
     }
     if (settle) { settle = false; snap(); if (snapshot) { holdSnap = true; startJob(); } else rebuild(); idleAtlas(); }
     if (recomposeAt && !rethreading && !snapshot && !sewing && now >= recomposeAt) { recomposeAt = 0; startJob(); }
@@ -371,7 +431,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
         hi = sewLo;
         while (hi < S.length && S[hi].c1 && t >= S[hi].t1) hi++;
       }
-      blit(full);
+      if (!gliding) blit(full);
       if (hi > sewLo) {
         for (let i = sewLo; i < hi; i++) { const s = S[i]; if (s.c1) R.stitch(ctx, s, s.c1, clamp((t - s.t1) / SEW_DUR, 0, 1)); }
         pullNeedle(S[hi - 1], clamp((t - S[hi - 1].t1) / SEW_DUR, 0, 1), now);
@@ -589,6 +649,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
   const inZone = () => { const b = R.box; const y = ptr.y + sy(); return ptr.in && !ptr.touch && ptr.x >= b.x && ptr.x <= b.x + b.s && y >= b.y && y <= b.y + b.s; };
 
   function drawButterfly(now: number, dt: number) {
+    if (fxDrawn) { fx.setTransform(1, 0, 0, 1, 0, 0); fx.clearRect(0, 0, fxLayer.width, fxLayer.height); fxDrawn = false; }
     if (sewing) return false;
     const b = R.box;
     if (bf.state === "wait") { bf.x = b.x + b.s * 1.05; bf.y = b.y + b.s * 0.12; bf.state = "fly"; bf.tgt = pickFlower(); }
@@ -620,15 +681,17 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     const open = flying ? 0.2 + 0.8 * Math.abs(Math.cos(bf.phase)) : 0.6 + 0.4 * Math.abs(Math.cos(bf.phase));
     const w = threadPx() * 1.3, lift = flying ? 1 : 0.25, lvl = Math.round(open * 11), K = 0.78;
     while (pollen.length && now - pollen[0].t > 1600) pollen.shift();
+    R.setBase(fx, DPR, 0, -sy() * DPR);
+    fxDrawn = true;
     for (const p of pollen) {
       const age = (now - p.t) / 1000;
-      ctx.globalAlpha = clamp(1 - age / 1.6, 0, 1);
-      ctx.fillStyle = "#F3CB42"; ctx.beginPath(); ctx.arc(p.x + p.vx * age, p.y + p.vy * age, p.r, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,240,.8)"; ctx.beginPath(); ctx.arc(p.x + p.vx * age - p.r * 0.3, p.y + p.vy * age - p.r * 0.3, p.r * 0.4, 0, 6.2832); ctx.fill();
+      fx.globalAlpha = clamp(1 - age / 1.6, 0, 1);
+      fx.fillStyle = "#F3CB42"; fx.beginPath(); fx.arc(p.x + p.vx * age, p.y + p.vy * age, p.r, 0, 6.2832); fx.fill();
+      fx.fillStyle = "rgba(255,255,240,.8)"; fx.beginPath(); fx.arc(p.x + p.vx * age - p.r * 0.3, p.y + p.vy * age - p.r * 0.3, p.r * 0.4, 0, 6.2832); fx.fill();
     }
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = mode === "dark" ? "rgba(0,0,0,.35)" : "rgba(40,28,18,.12)";
-    ctx.beginPath(); ctx.ellipse(bf.x + 14 * lift * K, bf.y + 26 * lift * K, (16 * open + 4) * 1.7 * K, 15 * K, bf.a, 0, 6.2832); ctx.fill();
+    fx.globalAlpha = 1;
+    fx.fillStyle = mode === "dark" ? "rgba(0,0,0,.35)" : "rgba(40,28,18,.12)";
+    fx.beginPath(); fx.ellipse(bf.x + 14 * lift * K, bf.y + 26 * lift * K, (16 * open + 4) * 1.7 * K, 15 * K, bf.a, 0, 6.2832); fx.fill();
     const key = `${mode}|${lvl}|${w}`;
     let spr = bfSprites.get(key);
     if (!spr) {
@@ -638,7 +701,7 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       bfSprites.set(key, sprite);
       spr = sprite;
     }
-    ctx.save(); ctx.translate(bf.x, bf.y); ctx.rotate(bf.a); ctx.scale(K, K); ctx.drawImage(spr, -75, -75, 150, 150); ctx.restore();
+    fx.save(); fx.translate(bf.x, bf.y); fx.rotate(bf.a); fx.scale(K, K); fx.drawImage(spr, -75, -75, 150, 150); fx.restore();
     lowPower = !flying && !pollen.length;
     return flying || pollen.length > 0;
   }
@@ -687,9 +750,28 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     kick();
   }
 
+  const sprites = new Map<string, HTMLCanvasElement>();
+  function sprite(key: string, w: number, h: number, paint: (g: CanvasRenderingContext2D) => void, sample = 1) {
+    const id = `${key}|${mode}|${DPR}|${sample}`;
+    let s = sprites.get(id);
+    if (!s) {
+      const d = DPR * sample;
+      s = makeCanvas(Math.ceil(w * d), Math.ceil(h * d));
+      const sg = context(s);
+      R.setBase(sg, d, 0, 0);
+      inPx(() => paint(sg));
+      sprites.set(id, s);
+    }
+    return s;
+  }
+  const LINK_W = 16, LINK_H = 12, LINK_X = 3;
+  function chainLink(c: Rgb, w: number) {
+    return sprite(`link:${c.join()}:${w.toFixed(2)}`, LINK_W, LINK_H, sg => R.loop(sg, [LINK_X, LINK_H / 2], [LINK_X + 8.5, LINK_H / 2], 1.9, w, c, 1, 1, "over"));
+  }
+
   function drawLines(g: CanvasRenderingContext2D, now: number) {
     let busy = false;
-    const base = colour("uiA"), acc = colour("uiB"), w = Math.max(1.7, threadPx() * 0.6);
+    const w = Math.max(1.7, threadPx() * 0.6) * 0.9, base = chainLink(colour("uiA"), w), acc = chainLink(colour("uiB"), w);
     for (const L of lines) {
       const hv = hoverOf(L.el), k = clamp((now - hv.t) / 420, 0, 1), h = hv.on ? k : 1 - k;
       if (k < 1) busy = true;
@@ -698,7 +780,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       const span = L.x1 - L.x0, lit = (x: number) => (x - L.x0) / span < h;
       for (let x = L.x0; x < L.x1 - 3; x += 7) {
         if (hoverOnly && !lit(x)) continue;
-        R.loop(g, [x, L.y], [Math.min(L.x1, x + 8.5), L.y], 1.9, w * 0.9, lit(x) ? acc : base, 1, 1, "over");
+        const s = lit(x) ? acc : base, len = Math.min(LINK_W, L.x1 - x + LINK_X + 3), f = len / LINK_W;
+        g.drawImage(s, 0, 0, s.width * f, s.height, x - LINK_X, L.y - LINK_H / 2, len, LINK_H);
       }
     }
     return busy;
@@ -710,12 +793,17 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       const kind = L.el.getAttribute("data-icon");
       if (!kind || seen.has(L.el) || !iconStitches[kind]) continue;
       seen.add(L.el);
-      const Z = 1.2, ox = L.x0 - 33, oy = (L.t + L.y - 3) / 2 - 11 * Z;
-      for (const s of iconStitches[kind]) {
-        const c = colour(s.key);
-        if (s.knot) R.knot(g, [ox + s.knot[0] * Z, oy + s.knot[1] * Z], s.r * 0.9 * Z, 1, c, 1, "over");
-        else R.curved(g, [ox + s.p0[0] * Z, oy + s.p0[1] * Z], [ox + ((s.p0[0] + s.p1[0]) / 2) * Z, oy + ((s.p0[1] + s.p1[1]) / 2) * Z], [ox + s.p1[0] * Z, oy + s.p1[1] * Z], s.w * Z, c, 1, 1, "over");
-      }
+      const block = (L.el.closest("li") ?? L.el).getBoundingClientRect(), tall = block.height > 32;
+      const Z = tall ? Math.round(clamp(block.height / 22, 1.6, 2.4) * 20) / 20 : 1.3, M = 8, size = 22 * Z + M * 2;
+      const ox = L.x0 - (tall ? 12 : 9) - 22 * Z, oy = block.top + scrollPos + block.height / 2 - 11 * Z;
+      const pic = sprite(`icon:${kind}:${Z.toFixed(2)}`, size, size, sg => {
+        for (const s of iconStitches[kind]) {
+          const c = colour(s.key);
+          if (s.knot) R.knot(sg, [M + s.knot[0] * Z, M + s.knot[1] * Z], s.r * 0.9 * Z, 1, c, 1, "over");
+          else R.curved(sg, [M + s.p0[0] * Z, M + s.p0[1] * Z], [M + ((s.p0[0] + s.p1[0]) / 2) * Z, M + ((s.p0[1] + s.p1[1]) / 2) * Z], [M + s.p1[0] * Z, M + s.p1[1] * Z], s.w * Z, c, 1, 1, "over");
+        }
+      }, 2);
+      g.drawImage(pic, ox - M, oy - M, size, size);
     }
   }
 
@@ -876,7 +964,8 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
     if (mode !== startMode) { R.resetAtlases(); R.atlas(mode); composeFrame(); }
     for (const s of S) { s.c0 = colour(s.key, s.asph && gp); s.c1 = null; }
     linen = makeLinen(); paintBg();
-    for (let tries = 0; tries < 3; tries++) {
+    const sew = !!opts.sew && !reduced && S.length > 0;
+    for (let tries = 0; tries < (sew ? 0 : 3); tries++) {
       const box = { ...R.box };
       startJob();
       const step = job;
@@ -887,10 +976,10 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       yield;
     }
     ready = true;
+    if (sew) sewAll(250);
     if (frameKey !== `${W}x${H}`) layout(); else { linen = makeLinen(); paintBg(); measure(); }
     kick();
-    const delay = opts.onReady?.() ?? 0;
-    if (opts.sew && !reduced && S.length) sewAll(delay + 250);
+    opts.onReady?.();
     window.setTimeout(idleAtlas, 1500);
   }
 
@@ -913,11 +1002,18 @@ export function createEmbroidery(canvas: HTMLCanvasElement, opts: EmbroideryOpti
       }
       applyMode(m);
     },
-    setHighlight(tint) { if (tint === gp) return; if (ready) rethread(tint); else gp = tint; },
+    setHighlight(tint) {
+      if (ready && tween) { deferred = tint; return; }
+      deferred = undefined;
+      if (tint === gp) return;
+      if (ready) rethread(tint); else gp = tint;
+    },
     unpick() { if (sewn.length) { unpicking = performance.now(); kick(); } },
     measure,
     destroy() {
       destroyed = true;
+      glider.remove();
+      fxLayer.remove();
       cancelAnimationFrame(raf); cancelAnimationFrame(relayoutFrame);
       clearTimeout(resizeTimer); clearTimeout(pressTimer);
       removeEventListener("pointermove", onPointerMove);
