@@ -1,3 +1,3 @@
-# asphodelius <img src="./flower.svg" width="64" alt="Asphodelius flower" />
+# asphodelius 
 
-Portfolio: [asphodelius.dev](https://asphodelius.dev)
+
